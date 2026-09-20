@@ -59,6 +59,20 @@ def retrieve_relevant_context(db: Session, question: str):
     return context
 
 def answer_memory_question(db: Session, question: str, history: List[dict] = None) -> Dict[str, Any]:
+    q_lower = question.strip().lower()
+    if q_lower in ["hi", "hello", "hey", "who are you", "what can you do"]:
+        docs = db.query(Document).all()
+        doc_names = ", ".join([f"'{d.filename}'" for d in docs]) if docs else "no documents yet"
+        return {
+            "answer": f"Hello! I am MEMORA, your intelligent institutional memory assistant. I am currently indexing {doc_names}. Feel free to ask me questions about the decisions, events, or people in these records!",
+            "confidence": 1.0,
+            "decision": "",
+            "evidence": [],
+            "related_decisions": [],
+            "related_events": [],
+            "related_people": []
+        }
+        
     api_key = (os.getenv("GEMINI_API_KEY") or os.getenv("NVIDIA_API_KEY"))
     if not api_key:
         return {"answer": "API key missing.", "decision": "", "evidence": [], "confidence": 0.0, "related_decisions": [], "related_events": [], "related_people": []}
@@ -82,15 +96,15 @@ def answer_memory_question(db: Session, question: str, history: List[dict] = Non
         hist_str = "CONVERSATION HISTORY:\n" + "\n".join([f"{'User' if m['role']=='user' else 'Assistant'}: {m['content']}" for m in history[-5:]])
 
     prompt = f"""
-You are MEMORA's intelligent institutional memory assistant.
-You are a helpful chatbot interacting directly with a user.
+You are MEMORA, an intelligent, conversational institutional memory assistant.
+You MUST be friendly and conversational when the user greets you or asks about your capabilities.
 
 Available Documents (Datasets) in the system: {doc_names}
 
-Follow these rules:
-1. If the user asks a conversational question (e.g. "Hello", "How are you", "What can you do?", "What datasets are available?"), reply conversationally and naturally as an AI assistant. You can list the available documents.
-2. If the user asks a factual question about institutional memory, answer using ONLY the supplied EVIDENCE CONTEXT below. Do not invent facts.
-3. If the user asks a specific factual question and the evidence is insufficient to answer it, explicitly state exactly: "I could not find sufficient evidence in the available institutional records."
+Follow these rules strictly:
+1. CONVERSATIONAL QUERIES: If the user says something conversational (e.g. "Hi", "Hello", "How are you?"), DO NOT use the insufficient evidence string. Reply warmly as MEMORA, the institutional memory assistant, and tell them you can answer questions based on the datasets.
+2. FACTUAL QUERIES: Answer using ONLY the supplied EVIDENCE CONTEXT.
+3. INSUFFICIENT EVIDENCE: If it's a FACTUAL query and you don't know the answer, explicitly state exactly: "INSUFFICIENT_EVIDENCE" in the answer field.
 
 When answering factual questions based on evidence, identify WHAT happened, WHY it happened, WHO was involved, WHEN it happened, and WHAT decision followed. Supply the evidence IDs used.
 
@@ -142,8 +156,8 @@ USER MESSAGE:
                         d = db.query(Decision).filter(Decision.id == ev.entity_id).first()
                         if d: rel_decisions.append({"id": d.id, "title": d.title})
                     
-            if "sufficient evidence" in parsed.answer.lower() and "could not find" in parsed.answer.lower():
-                return empty_resp
+            if "INSUFFICIENT_EVIDENCE" in parsed.answer:
+                parsed.answer = "I could not find sufficient evidence in the available institutional records."
                 
             return {
                 "answer": parsed.answer,

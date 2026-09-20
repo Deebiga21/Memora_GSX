@@ -42,7 +42,7 @@ export default function DocumentDetail() {
             <span>{doc.pages?.length || 0} Pages Processed</span>
           </div>
         </div>
-        <a href={http://localhost:8000/documents//file} target="_blank" rel="noopener noreferrer" className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-sm transition-colors text-sm">
+        <a href={`http://localhost:8000/documents/${doc.id}/file`} target="_blank" rel="noopener noreferrer" className="px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-bold shadow-sm transition-colors text-sm">
           View Raw PDF
         </a>
       </div>
@@ -55,7 +55,7 @@ export default function DocumentDetail() {
               <button 
                 key={p.page_number} 
                 onClick={() => setActivePage(p.page_number)}
-                className={px-4 py-2 rounded-lg text-sm font-bold flex-shrink-0 transition-colors }
+                className={`px-4 py-2 rounded-lg text-sm font-bold flex-shrink-0 transition-colors ${activePage === p.page_number ? 'bg-blue-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-100'}`}
               >
                 Page {p.page_number}
               </button>
@@ -86,7 +86,7 @@ export default function DocumentDetail() {
               currentPage.extracted_entities.map((ent: any, i: number) => (
                 <div key={i} className="bg-white border border-slate-200 rounded-xl p-4 shadow-sm hover:shadow-md transition-shadow">
                   <div className="flex items-center justify-between mb-2">
-                    <span className={	ext-[10px] uppercase font-black tracking-widest px-2 py-0.5 rounded }
+                    <span className={`text-[10px] uppercase font-black tracking-widest px-2 py-0.5 rounded ${ent.type === 'decision' ? 'bg-purple-100 text-purple-700' : ent.type === 'meeting' ? 'bg-blue-100 text-blue-700' : ent.type === 'person' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-700'}`}
                     >
                       {ent.type}
                     </span>
@@ -99,8 +99,8 @@ export default function DocumentDetail() {
                     </div>
                   )}
                   {ent.type === 'decision' && (
-                    <Link to={/decisions//trace} className="mt-3 inline-flex text-[11px] font-bold text-blue-600 hover:underline">
-                      View Decision DNA ?
+                    <Link to={`/decisions/${ent.id}/trace`} className="mt-3 inline-flex text-[11px] font-bold text-blue-600 hover:underline">
+                      View Decision DNA →
                     </Link>
                   )}
                 </div>
