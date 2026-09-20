@@ -1,0 +1,263 @@
+import { Link } from "react-router-dom";
+import { BrainCircuit, FileText, Calendar, Users, Network, Search, ArrowRight, Zap, Globe } from "lucide-react";
+import { motion, useScroll } from "framer-motion";
+import { useState, useEffect } from "react";
+
+export default function LandingPage() {
+  const { scrollYProgress } = useScroll();
+  
+  return (
+    <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-white/20 relative">
+      
+      {/* FLOATING NAVBAR (Dark Pill Style) */}
+      <nav className="absolute top-6 left-1/2 -translate-x-1/2 z-50 bg-black/60 border border-white/10 rounded-full px-6 py-4 flex items-center justify-between w-[95%] max-w-6xl backdrop-blur-xl shadow-2xl">
+        <div className="flex items-center gap-2 pl-2">
+          <Globe className="text-white" size={20} />
+          <span className="text-lg font-bold tracking-widest text-white">MEMORA</span>
+        </div>
+        <div className="hidden md:flex items-center gap-10 text-xs font-semibold uppercase tracking-widest">
+          <a href="#features" className="text-gray-400 hover:text-white transition-colors">Features</a>
+          <a href="#pricing" className="text-gray-400 hover:text-white transition-colors">Pricing</a>
+          <a href="#about" className="text-gray-400 hover:text-white transition-colors">About</a>
+        </div>
+        <div className="flex items-center gap-6">
+          <button className="text-xs font-semibold uppercase tracking-widest text-gray-400 hover:text-white hidden sm:block transition-colors">Sign Up</button>
+          <Link to="/dashboard" className="px-6 py-2 bg-white/10 border border-white/20 rounded-full text-xs font-semibold uppercase tracking-widest hover:bg-white/20 transition-colors">
+            Login
+          </Link>
+        </div>
+      </nav>
+
+      {/* VIDEO HERO SECTION */}
+      <section className="relative pt-40 pb-32 px-8 min-h-[100vh] flex flex-col items-center justify-center overflow-hidden">
+        
+        {/* Background Video */}
+        <video 
+          autoPlay 
+          loop 
+          muted 
+          playsInline
+          className="absolute inset-0 w-full h-full object-cover z-0"
+        >
+          <source src="/bg-video.mp4" type="video/mp4" />
+        </video>
+
+        {/* Hero Content */}
+        <div className="text-center z-20 mt-16 relative w-full max-w-4xl mx-auto flex flex-col items-center">
+          
+          <motion.h1 
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="text-7xl md:text-8xl lg:text-[120px] font-serif tracking-tight text-white leading-none mb-10 drop-shadow-[0_10px_30px_rgba(0,0,0,0.8)]"
+          >
+            Remember it <span className="italic font-light">all</span>
+          </motion.h1>
+
+          <motion.div 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="w-full max-w-md relative mb-6 shadow-2xl"
+          >
+            <input 
+              type="email" 
+              placeholder="Enter your email" 
+              className="w-full bg-black/40 border border-white/20 rounded-full py-4 pl-6 pr-14 text-white placeholder-gray-400 focus:outline-none focus:border-white/50 backdrop-blur-xl shadow-inner"
+            />
+            <button className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full flex items-center justify-center text-black hover:bg-gray-200 transition-colors shadow-md">
+              <ArrowRight size={20} strokeWidth={2.5} />
+            </button>
+          </motion.div>
+
+          <motion.p 
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.3 }}
+            className="text-sm text-gray-200 font-medium max-w-md mx-auto mb-16 leading-relaxed drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)]"
+          >
+            Stay updated with the latest news and insights. Subscribe to our newsletter today and never miss out on exciting updates.
+          </motion.p>
+          
+        </div>
+        
+        {/* Bottom Button */}
+        <motion.div 
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.8 }}
+          className="absolute bottom-12 z-20"
+        >
+          <button className="px-8 py-3 rounded-full bg-black/60 border border-white/20 text-xs font-semibold uppercase tracking-widest hover:bg-black transition-colors backdrop-blur-md shadow-2xl">
+            Read the manifesto
+          </button>
+        </motion.div>
+      </section>
+
+      {/* THE TOOLKIT / INTERFACE (Skeuomorphic Theme) */}
+      <section className="pt-24 pb-32 px-8 relative z-10 min-h-screen overflow-hidden" style={{ backgroundColor: "#201D19" }}>
+        
+        {/* Background Paper Texture / Grid Effect */}
+        <div className="absolute bottom-0 left-0 right-0 h-full opacity-10 pointer-events-none" 
+             style={{ 
+               backgroundImage: "linear-gradient(0deg, rgba(223,206,182,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(223,206,182,0.1) 1px, transparent 1px)",
+               backgroundSize: "40px 40px"
+             }}>
+        </div>
+
+        <div className="max-w-5xl mx-auto text-center mb-16 relative z-10">
+          <h2 className="text-4xl md:text-5xl font-normal tracking-wide mb-6 text-[#F4EFE6]" style={{ fontFamily: "Georgia, serif" }}>Your institutional toolkit</h2>
+          <p className="text-sm text-[#C9AD8A] max-w-2xl mx-auto mb-10 font-sans leading-relaxed">
+            From scattered documents, through AI extraction, and into connected memory. <br className="hidden md:block" /> MEMORA brings clarity to the messy middle of decision tracking.
+          </p>
+        </div>
+
+        {/* Tabbed UI Showcase */}
+        <div className="max-w-5xl mx-auto px-4 font-sans relative z-10">
+          
+          {/* Full-width Tabs Container */}
+          <div className="w-full bg-[#2C2A28] border border-[#5A544A] shadow-[0_5px_15px_rgba(0,0,0,0.4)] rounded-full py-4 flex justify-center gap-12 md:gap-20 mb-8 relative overflow-hidden">
+            <button className="flex items-center gap-2 text-sm font-semibold text-[#2C2A28] bg-[#DFCEB6] px-6 py-1.5 rounded-full shadow-inner relative z-10">
+              <Users size={16} /> Ingest
+            </button>
+            <button className="flex items-center gap-2 text-sm font-medium text-[#A18A68] hover:text-[#DFCEB6] transition-colors">
+              <Network size={16} /> Extract
+            </button>
+            <button className="flex items-center gap-2 text-sm font-medium text-[#A18A68] hover:text-[#DFCEB6] transition-colors">
+              <Globe size={16} /> Connect
+            </button>
+            <button className="flex items-center gap-2 text-sm font-medium text-[#A18A68] hover:text-[#DFCEB6] transition-colors">
+              <BrainCircuit size={16} /> Make it real
+            </button>
+          </div>
+
+          {/* App UI Mockup (Skeuomorphic) */}
+          <div className="flex flex-col md:flex-row gap-6 items-stretch pb-16 h-full md:h-[450px]">
+            
+            {/* Left Sidebar Mock */}
+            <div className="w-full md:w-64 bg-[#2C2A28] rounded-3xl border border-[#5A544A] p-5 shadow-2xl flex flex-col gap-4">
+              <div className="flex items-center justify-between text-[10px] font-bold text-[#A18A68] mb-2 px-1 uppercase tracking-wider">
+                <span>Layers / Entities</span>
+                <span>+</span>
+              </div>
+              
+              <div className="bg-[#34322F] p-4 rounded-2xl border border-[#5A544A] flex items-center justify-between group cursor-pointer shadow-inner relative overflow-hidden">
+                <div className="flex items-center gap-3 relative z-10">
+                  <div className="w-8 h-8 rounded-full bg-[#EADBB9] border border-[#C9AD8A] text-[#2C2A28] flex items-center justify-center shadow-sm"><Users size={14}/></div>
+                  <div>
+                    <div className="text-sm font-bold text-[#F4EFE6]">People</div>
+                    <div className="text-[10px] text-[#A18A68] font-medium">12 Nodes</div>
+                  </div>
+                </div>
+                {/* Mini Graph */}
+                <svg width="40" height="20" viewBox="0 0 40 20" fill="none" className="opacity-60 relative z-10">
+                  <path d="M0 15 Q 10 5, 20 15 T 40 5" stroke="#DFCEB6" strokeWidth="2" fill="none" />
+                </svg>
+              </div>
+
+              <div className="bg-[#34322F] p-4 rounded-2xl border border-[#5A544A] flex items-center justify-between group cursor-pointer shadow-inner mt-2 relative overflow-hidden">
+                <div className="flex items-center gap-3 relative z-10">
+                  <div className="w-8 h-8 rounded-full bg-[#EADBB9] border border-[#C9AD8A] text-[#2C2A28] flex items-center justify-center shadow-sm"><Calendar size={14}/></div>
+                  <div>
+                    <div className="text-sm font-bold text-[#F4EFE6]">Events</div>
+                    <div className="text-[10px] text-[#A18A68] font-medium">5 Nodes</div>
+                  </div>
+                </div>
+                {/* Mini Graph */}
+                <svg width="40" height="20" viewBox="0 0 40 20" fill="none" className="opacity-60 relative z-10">
+                  <path d="M0 10 Q 10 15, 20 5 T 40 10" stroke="#DFCEB6" strokeWidth="2" fill="none" />
+                </svg>
+              </div>
+            </div>
+
+            {/* Center Canvas */}
+            <div className="flex-1 rounded-3xl relative overflow-hidden bg-[#2C2A28] border border-[#5A544A] shadow-2xl flex flex-col items-center p-12">
+               
+               {/* Decorative background grid inside canvas */}
+               <div className="absolute inset-0 opacity-5 pointer-events-none"
+                    style={{
+                      backgroundImage: "linear-gradient(0deg, #DFCEB6 1px, transparent 1px), linear-gradient(90deg, #DFCEB6 1px, transparent 1px)",
+                      backgroundSize: "20px 20px"
+                    }}>
+               </div>
+               
+               <div className="absolute top-6 right-6 text-[#A18A68]"><ArrowRight size={18}/></div>
+               
+               <div className="w-full max-w-sm relative z-10 flex flex-col h-full justify-center">
+                 <div className="text-center mb-10">
+                   <h3 className="text-2xl font-normal text-[#F4EFE6] mb-2" style={{ fontFamily: "Georgia, serif" }}>Project Deadline Extended</h3>
+                   <p className="text-[10px] text-[#A18A68] uppercase tracking-widest font-bold">Decision Traceability Graph</p>
+                 </div>
+                 
+                 <div className="space-y-4 relative">
+                   {/* Connecting Line */}
+                   <div className="absolute left-[34px] top-10 bottom-10 w-[2px] bg-[#5A544A] z-0"></div>
+
+                   <div className="bg-[#34322F] border border-[#5A544A] p-4 rounded-2xl shadow-lg flex items-center gap-4 relative z-10">
+                     <div className="w-14 h-14 bg-[#DFCEB6] text-[#2C2A28] flex items-center justify-center rounded-full border border-[#C9AD8A] shadow-inner">
+                       <Zap size={22} className="fill-[#2C2A28]"/>
+                     </div>
+                     <div>
+                       <div className="text-[9px] font-bold text-[#A18A68] uppercase tracking-wider mb-0.5">TRIGGER</div>
+                       <div className="text-sm font-bold text-[#F4EFE6]">Hardware Testing Delay</div>
+                     </div>
+                   </div>
+                   
+                   <div className="bg-[#34322F] border border-[#5A544A] p-4 rounded-2xl shadow-lg flex items-center gap-4 relative z-10">
+                     <div className="w-14 h-14 bg-[#EADBB9] text-[#2C2A28] flex items-center justify-center rounded-full border border-[#C9AD8A] shadow-inner">
+                       <FileText size={22}/>
+                     </div>
+                     <div>
+                       <div className="text-[9px] font-bold text-[#A18A68] uppercase tracking-wider mb-0.5">EVIDENCE</div>
+                       <div className="text-sm font-bold text-[#F4EFE6]">Project Deadline Extended</div>
+                     </div>
+                   </div>
+                 </div>
+               </div>
+            </div>
+
+            {/* Right Sidebar Mock */}
+            <div className="w-full md:w-72 bg-[#2C2A28] rounded-3xl border border-[#5A544A] p-5 shadow-2xl flex flex-col gap-4">
+              <div className="text-[10px] font-bold text-[#A18A68] mb-1 px-1 uppercase tracking-wider">Modify / Ask</div>
+              
+              <div className="bg-[#EADBB9] p-5 rounded-2xl border border-[#C9AD8A] shadow-[inset_0_2px_10px_rgba(0,0,0,0.1)] mb-2 relative overflow-hidden" style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cream-paper.png')" }}>
+                <div className="text-[9px] text-[#8C7A5E] mb-3 font-bold uppercase tracking-wider">Prompt</div>
+                <div className="text-sm text-[#38342B] mb-8 font-semibold leading-relaxed">Why was the project deadline extended?</div>
+                
+                <button className="w-full py-3 rounded-xl text-sm font-bold shadow-md transition-all hover:scale-[1.02]"
+                        style={{ backgroundColor: "#2C2A28", color: "#DFCEB6" }}>
+                  Generate
+                </button>
+              </div>
+
+              <div className="text-[10px] font-bold text-[#A18A68] mb-1 mt-2 px-1 uppercase tracking-wider">Actions</div>
+              <div className="space-y-1">
+                <button className="w-full text-left px-4 py-3 text-xs text-[#DFCEB6] font-medium hover:bg-[#34322F] rounded-xl flex items-center gap-3 transition-colors"><Network size={14}/> View Graph</button>
+                <button className="w-full text-left px-4 py-3 text-xs text-[#DFCEB6] font-medium hover:bg-[#34322F] rounded-xl flex items-center gap-3 transition-colors"><FileText size={14}/> Read Source</button>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="bg-[#0a0a0a] text-gray-600 py-16 px-8 border-t border-white/5">
+        <div className="max-w-7xl mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+          <div>
+            <div className="flex items-center gap-2 mb-4">
+              <Globe className="text-gray-500" size={20} />
+              <span className="text-lg font-bold tracking-tight text-gray-300">MEMORA</span>
+            </div>
+            <p className="text-sm max-w-sm">Remember what happened. Understand why. Trace every decision.</p>
+          </div>
+          <div className="flex flex-wrap gap-8 text-sm">
+            <a href="#" className="hover:text-gray-300 transition-colors">Features</a>
+            <a href="#" className="hover:text-gray-300 transition-colors">Pricing</a>
+            <a href="#" className="hover:text-gray-300 transition-colors">About</a>
+            <a href="#" className="hover:text-gray-300 transition-colors">Privacy</a>
+          </div>
+        </div>
+      </footer>
+    </div>
+  );
+}
