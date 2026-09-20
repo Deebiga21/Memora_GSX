@@ -2,6 +2,8 @@ import { Link } from "react-router-dom";
 import { BrainCircuit, FileText, Calendar, Users, Network, Search, ArrowRight, Zap, Globe } from "lucide-react";
 import { motion, useScroll } from "framer-motion";
 import { useState, useEffect } from "react";
+import LiquidGlassCluster from "../components/LiquidGlassCluster";
+import ParticleDrift from "../components/ParticleDrift";
 
 export default function LandingPage() {
   const { scrollYProgress } = useScroll();
@@ -93,9 +95,100 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
+      {/* HOW IT WORKS SECTION */}
+      <section id="features" className="py-24 px-8 bg-[#0a0a0a] relative z-10 border-b border-white/5 overflow-hidden">
+        
+        <div className="absolute inset-0 z-0 opacity-40 pointer-events-none mix-blend-screen">
+          <LiquidGlassCluster background="#0a0a0a" backdrop={{ type: "None" }} speed={20} />
+        </div>
+
+        <div className="max-w-5xl mx-auto relative z-10">
+          <div className="text-center mb-20">
+            <h2 className="text-4xl md:text-5xl font-serif tracking-tight text-white mb-6">How it works</h2>
+            <p className="text-gray-400 max-w-2xl mx-auto">From raw documents to an interconnected institutional memory.</p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-12 lg:gap-16 relative">
+            {/* Connecting line for desktop */}
+            <div className="hidden md:block absolute left-8 top-8 bottom-8 w-[2px] bg-gradient-to-b from-white/20 via-white/10 to-transparent z-0"></div>
+
+            {/* Step 1 */}
+            <div className="flex flex-col md:flex-row gap-6 items-start relative z-10">
+              <div className="w-16 h-16 rounded-full bg-black flex items-center justify-center shrink-0 border border-white/20 text-xl font-bold shadow-[0_0_20px_rgba(255,255,255,0.1)]">1</div>
+              <div className="pt-2">
+                <h3 className="text-2xl font-semibold mb-3">Extract</h3>
+                <p className="text-gray-400 leading-relaxed">It reads the document page by page and preserves the page number.</p>
+              </div>
+            </div>
+            
+            {/* Step 2 */}
+            <div className="flex flex-col md:flex-row gap-6 items-start relative z-10">
+              <div className="w-16 h-16 rounded-full bg-black flex items-center justify-center shrink-0 border border-white/20 text-xl font-bold shadow-[0_0_20px_rgba(255,255,255,0.1)]">2</div>
+              <div className="pt-2">
+                <h3 className="text-2xl font-semibold mb-3">Understand</h3>
+                <p className="text-gray-400 leading-relaxed">AI identifies important information such as people, events, meetings, decisions, actions and outcomes.</p>
+              </div>
+            </div>
+            
+            {/* Step 3 */}
+            <div className="flex flex-col md:flex-row gap-6 items-start relative z-10">
+              <div className="w-16 h-16 rounded-full bg-black flex items-center justify-center shrink-0 border border-white/20 text-xl font-bold shadow-[0_0_20px_rgba(255,255,255,0.1)]">3</div>
+              <div className="pt-2">
+                <h3 className="text-2xl font-semibold mb-3">Evidence</h3>
+                <p className="text-gray-400 leading-relaxed">Every extracted piece of information is linked back to the original document, exact page and supporting text.</p>
+              </div>
+            </div>
+            
+            {/* Step 5 */}
+            <div className="flex flex-col md:flex-row gap-6 items-start relative z-10">
+              <div className="w-16 h-16 rounded-full bg-black flex items-center justify-center shrink-0 border border-white/20 text-xl font-bold shadow-[0_0_20px_rgba(255,255,255,0.1)]">5</div>
+              <div className="pt-2">
+                <h3 className="text-2xl font-semibold mb-3">Remember</h3>
+                <p className="text-gray-400 leading-relaxed">All of this is stored in the database, so the information remains available even after the user leaves the page or uploads another document.</p>
+              </div>
+            </div>
+
+            {/* Step 4 (Spans 2 columns if grid, or just wide) */}
+            <div className="flex flex-col md:flex-row gap-6 items-start relative z-10 md:col-span-2 mt-8 md:mt-0">
+              <div className="w-16 h-16 rounded-full bg-black flex items-center justify-center shrink-0 border border-white/20 text-xl font-bold shadow-[0_0_20px_rgba(255,255,255,0.1)]">4</div>
+              <div className="pt-2 w-full">
+                <h3 className="text-2xl font-semibold mb-3">Connect</h3>
+                <p className="text-gray-400 leading-relaxed mb-8 max-w-2xl">MEMORA then connects information across documents to form a unified graph of knowledge.</p>
+                
+                <div className="bg-[#111] border border-white/10 rounded-3xl p-8 max-w-3xl flex flex-col md:flex-row items-center gap-4 shadow-2xl relative overflow-hidden">
+                   <div className="absolute inset-0 bg-gradient-to-r from-blue-500/5 to-purple-500/5"></div>
+                   <div className="px-5 py-3 bg-white/5 border border-white/10 rounded-xl text-sm font-medium text-center shadow-lg backdrop-blur-sm z-10 whitespace-nowrap">Hardware Testing Issue</div>
+                   <ArrowRight className="rotate-90 md:rotate-0 text-gray-600 shrink-0 z-10" size={18} />
+                   <div className="px-5 py-3 bg-white/5 border border-white/10 rounded-xl text-sm font-medium text-center shadow-lg backdrop-blur-sm z-10 whitespace-nowrap">Committee Meeting</div>
+                   <ArrowRight className="rotate-90 md:rotate-0 text-gray-600 shrink-0 z-10" size={18} />
+                   <div className="px-5 py-3 bg-white/5 border border-white/10 rounded-xl text-sm font-medium text-center shadow-lg backdrop-blur-sm z-10 whitespace-nowrap">People involved</div>
+                   <ArrowRight className="rotate-90 md:rotate-0 text-gray-600 shrink-0 z-10" size={18} />
+                   <div className="px-5 py-3 bg-white/10 border border-white/30 rounded-xl text-sm font-bold text-center text-white shadow-[0_0_20px_rgba(255,255,255,0.15)] backdrop-blur-sm z-10 whitespace-nowrap">Deadline Extension Decision</div>
+                   <ArrowRight className="rotate-90 md:rotate-0 text-gray-600 shrink-0 z-10" size={18} />
+                   <div className="px-5 py-3 bg-white/5 border border-white/10 rounded-xl text-sm font-medium text-center shadow-lg backdrop-blur-sm z-10 whitespace-nowrap">Final Action</div>
+                </div>
+              </div>
+            </div>
+            
+          </div>
+        </div>
+      </section>
+
       {/* THE TOOLKIT / INTERFACE (Skeuomorphic Theme) */}
       <section className="pt-24 pb-32 px-8 relative z-10 min-h-screen overflow-hidden" style={{ backgroundColor: "#201D19" }}>
         
+        {/* ParticleDrift Background */}
+        <div className="absolute inset-0 z-0 opacity-50 pointer-events-none mix-blend-screen">
+          <ParticleDrift 
+             background="#201D19" 
+             baseColor="#DFCEB6" 
+             accentColor="#83633F" 
+             density={100} 
+             speed={20}
+             hover={200}
+          />
+        </div>
+
         {/* Background Paper Texture / Grid Effect */}
         <div className="absolute bottom-0 left-0 right-0 h-full opacity-10 pointer-events-none" 
              style={{ 

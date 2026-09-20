@@ -23,6 +23,18 @@ export default function Dashboard() {
 
   const counts = data?.counts || { documents: 0, people: 0, events: 0, meetings: 0, decisions: 0 };
   const recentDecisions = data?.recent_decisions || [];
+  const totalNodes = counts.documents + counts.people + counts.events + counts.meetings + counts.decisions;
+
+  if (totalNodes === 0) {
+    return (
+      <div className="h-full flex items-center justify-center text-[#A18A68]">
+        <div className="text-center">
+          <p className="text-xl mb-4 font-serif">No institutional memory yet.</p>
+          <p className="text-sm">Upload your first document to begin building MEMORA.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 max-w-[1200px] mx-auto text-[#F4EFE6] font-sans h-full flex flex-col">
@@ -31,7 +43,7 @@ export default function Dashboard() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-4xl font-normal tracking-wide mb-1" style={{ fontFamily: "Georgia, serif" }}>Welcome back, Deepika</h1>
-          <p className="text-sm text-[#A18A68]">Total memory indexed: {counts.documents + counts.people + counts.events + counts.decisions} nodes</p>
+          <p className="text-sm text-[#A18A68]">Total memory indexed: {totalNodes} nodes</p>
         </div>
         <div className="flex gap-2 bg-[#34322F] border border-[#5A544A] p-1 rounded-full text-xs font-semibold">
            <button className="px-4 py-1.5 rounded-full hover:text-white transition-colors">Week</button>
@@ -52,26 +64,20 @@ export default function Dashboard() {
            </div>
         </div>
 
-        {/* Fake Line Chart */}
-        <div className="absolute bottom-6 left-6 right-6 h-32 border-b border-[#5A544A]">
-           <svg className="w-full h-full" preserveAspectRatio="none" viewBox="0 0 100 100">
-             <polyline points="0,80 20,60 40,90 60,30 80,50 100,20" fill="none" stroke="#DFCEB6" strokeWidth="1.5" />
-             <polyline points="0,90 20,80 40,70 60,40 80,60 100,40" fill="none" stroke="#8C7A5E" strokeWidth="1" />
-             {/* Data points */}
-             <circle cx="60" cy="30" r="2" fill="#DFCEB6" />
-             <circle cx="100" cy="20" r="2" fill="#DFCEB6" />
-           </svg>
-           {/* Tooltip mimic (leather block) */}
-           <div className="absolute left-[30%] bottom-0 w-48 h-8 bg-[#83633F] rounded-t-md border-t border-l border-r border-[#A58257] shadow-inner flex items-center justify-center text-xs font-bold text-[#F4EFE6] tracking-widest uppercase"
-                style={{ boxShadow: "inset 0 2px 4px rgba(0,0,0,0.3)" }}>
-              Analysis Phase
-           </div>
-           {/* Bar graph mimic on the right */}
-           <div className="absolute right-0 bottom-0 flex gap-1 items-end h-16">
-              {[30,40,20,50,60,40,70,80,90,70,60,80,50,40,30,20].map((h, i) => (
-                <div key={i} className="w-1.5 bg-[#A18A68] rounded-t-sm" style={{height: `${h}%`}}></div>
-              ))}
-           </div>
+        {/* Dynamic Data Overview */}
+        <div className="absolute bottom-6 left-6 right-6 h-32 border-b border-[#5A544A] flex items-end justify-around pb-2">
+            <div className="flex flex-col items-center">
+              <span className="text-2xl font-bold">{counts.people}</span>
+              <span className="text-xs text-[#A18A68] uppercase">People</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <span className="text-2xl font-bold">{counts.events}</span>
+              <span className="text-xs text-[#A18A68] uppercase">Events</span>
+            </div>
+            <div className="flex flex-col items-center">
+              <span className="text-2xl font-bold">{counts.meetings}</span>
+              <span className="text-xs text-[#A18A68] uppercase">Meetings</span>
+            </div>
         </div>
       </div>
 
@@ -86,7 +92,6 @@ export default function Dashboard() {
            </div>
            
            <div className="flex-1 flex items-end justify-between gap-2 relative">
-             {/* Background grid lines */}
              <div className="absolute inset-0 flex flex-col justify-between opacity-20 pointer-events-none">
                 <div className="border-b border-[#5A544A] w-full"></div>
                 <div className="border-b border-[#5A544A] w-full"></div>
@@ -95,16 +100,16 @@ export default function Dashboard() {
              </div>
 
              <div className="w-full flex justify-between items-end h-40 z-10 px-2">
-                <div className="w-10 bg-transparent border-2 border-[#83633F] rounded-t-md relative flex justify-center transition-all duration-1000" style={{height: `${Math.max(10, (counts.people / Math.max(1, counts.people + counts.events + counts.meetings + counts.decisions)) * 100)}%`}}>
+                <div className="w-10 bg-transparent border-2 border-[#83633F] rounded-t-md relative flex justify-center transition-all duration-1000" style={{height: `${Math.max(10, (counts.people / Math.max(1, totalNodes)) * 100)}%`}}>
                    <div className="absolute -bottom-6 text-[10px] text-[#A18A68]">Peo</div>
                 </div>
-                <div className="w-10 bg-transparent border-2 border-[#83633F] rounded-t-md relative flex justify-center transition-all duration-1000" style={{height: `${Math.max(10, (counts.events / Math.max(1, counts.people + counts.events + counts.meetings + counts.decisions)) * 100)}%`}}>
+                <div className="w-10 bg-transparent border-2 border-[#83633F] rounded-t-md relative flex justify-center transition-all duration-1000" style={{height: `${Math.max(10, (counts.events / Math.max(1, totalNodes)) * 100)}%`}}>
                    <div className="absolute -bottom-6 text-[10px] text-[#A18A68]">Evt</div>
                 </div>
-                <div className="w-10 bg-transparent border-2 border-[#83633F] rounded-t-md relative flex justify-center transition-all duration-1000" style={{height: `${Math.max(10, (counts.meetings / Math.max(1, counts.people + counts.events + counts.meetings + counts.decisions)) * 100)}%`}}>
+                <div className="w-10 bg-transparent border-2 border-[#83633F] rounded-t-md relative flex justify-center transition-all duration-1000" style={{height: `${Math.max(10, (counts.meetings / Math.max(1, totalNodes)) * 100)}%`}}>
                    <div className="absolute -bottom-6 text-[10px] text-[#A18A68]">Mtg</div>
                 </div>
-                <div className="w-10 bg-transparent border-2 border-[#83633F] rounded-t-md relative flex justify-center transition-all duration-1000" style={{height: `${Math.max(10, (counts.decisions / Math.max(1, counts.people + counts.events + counts.meetings + counts.decisions)) * 100)}%`}}>
+                <div className="w-10 bg-transparent border-2 border-[#83633F] rounded-t-md relative flex justify-center transition-all duration-1000" style={{height: `${Math.max(10, (counts.decisions / Math.max(1, totalNodes)) * 100)}%`}}>
                    <div className="absolute -bottom-6 text-[10px] text-[#A18A68]">Dec</div>
                 </div>
              </div>
@@ -158,24 +163,14 @@ export default function Dashboard() {
                    </div>
                    <div className="flex items-center gap-3">
                      <span className="px-2 py-0.5 rounded-full bg-[#C6B395] text-[10px] font-bold uppercase tracking-wider text-[#38342B]">Decision</span>
-                     <span className="text-xs font-medium text-[#8C7A5E] w-12 text-right">{dec.date ? new Date(dec.date).getDate() : '12'} Aug</span>
+                     <span className="text-xs font-medium text-[#8C7A5E] w-12 text-right">{dec.date ? new Date(dec.date).getDate() : 'N/A'} {dec.date ? new Date(dec.date).toLocaleString('en-US', { month: 'short' }) : ''}</span>
                      <MoreVertical size={14} className="text-[#8C7A5E]"/>
                    </div>
                 </div>
               ))}
-              
-              {/* Fake documents to fill space matching the image */}
-              <div className="flex items-center justify-between p-2.5 rounded-xl border border-[#D8C7A3] bg-[#E3D2AD]/50 hover:bg-[#D8C7A3] transition-colors cursor-pointer shadow-sm">
-                 <div className="flex items-center gap-3">
-                   <FileText size={14} className="text-[#8C7A5E]"/>
-                   <span className="text-sm font-semibold truncate w-24">Strategic_Plan.pdf</span>
-                 </div>
-                 <div className="flex items-center gap-3">
-                   <span className="px-2 py-0.5 rounded-full bg-[#C6B395] text-[10px] font-bold uppercase tracking-wider text-[#38342B]">Document</span>
-                   <span className="text-xs font-medium text-[#8C7A5E] w-12 text-right">08 Aug</span>
-                   <MoreVertical size={14} className="text-[#8C7A5E]"/>
-                 </div>
-              </div>
+              {recentDecisions.length === 0 && (
+                 <div className="text-sm text-center text-[#8C7A5E] mt-10">No recent memory found.</div>
+              )}
            </div>
         </div>
 

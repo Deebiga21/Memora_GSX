@@ -3,7 +3,7 @@ import json
 from typing import List, Optional
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-from ..models import Person, Event, Meeting, Decision, Evidence
+from ..models import Person, Event, Meeting, Decision, Evidence, Prediction, Project
 from .pdf_service import get_document_chunks
 import google.generativeai as genai
 
@@ -50,6 +50,14 @@ class ExtractedPrediction(BaseModel):
     basis: str = Field(description="The explicit basis or reason stated in the document")
     evidence: Optional[AIEvidence] = None
 
+class ExtractedProject(BaseModel):
+    title: str = Field(description="Title or name of the project")
+    status: Optional[str] = Field(description="proposed, active, completed, delayed", default="proposed")
+    description: Optional[str] = Field(description="Brief description of the project", default=None)
+    budget: Optional[str] = Field(description="Budget if mentioned", default=None)
+    timeline: Optional[str] = Field(description="Timeline or duration if mentioned", default=None)
+    evidence: Optional[AIEvidence] = None
+
 class AIRelationship(BaseModel):
     source_entity: str = Field(description="Name/Title of the source entity")
     relationship_type: str = Field(description="E.g., triggered, resulted_in, supported_by, followed_by, participated_in")
@@ -62,6 +70,7 @@ class AIExtractionResult(BaseModel):
     meetings: List[ExtractedMeeting] = Field(default_factory=list)
     decisions: List[ExtractedDecision] = Field(default_factory=list)
     predictions: List[ExtractedPrediction] = Field(default_factory=list)
+    projects: List[ExtractedProject] = Field(default_factory=list)
     relationships: List[AIRelationship] = Field(default_factory=list)
 
 def extract_entities_from_chunk(text: str) -> Optional[AIExtractionResult]:
@@ -71,17 +80,18 @@ def extract_entities_from_chunk(text: str) -> Optional[AIExtractionResult]:
         return None
         
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-2.5-flash")
+    model = genai.GenerativeModel("gemini-3.6-flash")
     
     prompt = f"""
 You are an institutional memory extraction engine.
 Analyze only the supplied institutional document text.
-Extract people, events, meetings, decisions, and future predictions/foresight.
+Extract people, events, meetings, decisions, projects, and future predictions/foresight.
 Do not invent facts.
 Do not infer unsupported information as fact.
 If information is missing, return null or an empty array.
 For every important entity or decision, identify the page number and supporting evidence snippet based on the '--- PAGE X ---' markers in the text.
 A decision should include: title, date, reason, action, impact.
+A project should include: title, status, description, budget, timeline.
 A prediction should identify upcoming deadlines, planned meetings, expected actions, or potential risks EXPLICITLY stated in the text.
 Distinguish explicitly stated facts from inferred relationships.
 Only create a relationship when the document provides sufficient evidence.
@@ -90,11 +100,12 @@ Return valid JSON matching the following schema.
 EXPECTED JSON FORMAT:
 {{
     "people": [{{ "name": "...", "role": "...", "department": "...", "description": "...", "evidence": {{"page_number": 1, "snippet": "...", "confidence": 0.9}} }}],
-    "events": [{{ "title": "...", "date": "...", "type": "...", "description": "...", "evidence": {{...}} }}],
-    "meetings": [{{ "title": "...", "date": "...", "type": "...", "description": "...", "participants": ["..."], "evidence": {{...}} }}],
-    "decisions": [{{ "title": "...", "date": "...", "reason": "...", "action": "...", "impact": "...", "status": "...", "evidence": {{...}} }}],
-    "predictions": [{{ "type": "UPCOMING_DEADLINE", "description": "...", "expected_date": "...", "basis": "...", "evidence": {{...}} }}],
-    "relationships": [{{ "source_entity": "...", "relationship_type": "...", "target_entity": "...", "evidence": {{...}} }}]
+    "events": [{{ "title": "...", "date": "...", "type": "...", "description": "...", "evidence": {{"page_number": 1, "snippet": "...", "confidence": 0.9}} }}],
+    "meetings": [{{ "title": "...", "date": "...", "type": "...", "description": "...", "participants": ["..."], "evidence": {{"page_number": 1, "snippet": "...", "confidence": 0.9}} }}],
+    "decisions": [{{ "title": "...", "date": "...", "reason": "...", "action": "...", "impact": "...", "status": "...", "evidence": {{"page_number": 1, "snippet": "...", "confidence": 0.9}} }}],
+    "predictions": [{{ "type": "UPCOMING_DEADLINE", "description": "...", "expected_date": "...", "basis": "...", "evidence": {{"page_number": 1, "snippet": "...", "confidence": 0.9}} }}],
+    "projects": [{{ "title": "...", "status": "...", "description": "...", "budget": "...", "timeline": "...", "evidence": {{"page_number": 1, "snippet": "...", "confidence": 0.9}} }}],
+    "relationships": [{{ "source_entity": "...", "relationship_type": "...", "target_entity": "...", "evidence": {{"page_number": 1, "snippet": "...", "confidence": 0.9}} }}]
 }}
 
 TEXT:
@@ -179,6 +190,15 @@ def get_or_create_prediction(db: Session, p: ExtractedPrediction) -> Prediction:
     db.refresh(new_p)
     return new_p
 
+def get_or_create_project(db: Session, p: ExtractedProject) -> Project:
+    existing = db.query(Project).filter(Project.title.ilike(f"%{p.title}%")).first()
+    if existing: return existing
+    new_p = Project(title=p.title, status=p.status, description=p.description, budget=p.budget, timeline=p.timeline)
+    db.add(new_p)
+    db.commit()
+    db.refresh(new_p)
+    return new_p
+
 def run_extraction_pipeline(db: Session, document_id: int):
     chunks = get_document_chunks(db, document_id, chunk_size=5)
     
@@ -189,6 +209,7 @@ def run_extraction_pipeline(db: Session, document_id: int):
         "meetings": 0,
         "decisions": 0,
         "predictions": 0,
+        "projects": 0,
         "evidence": 0,
         "relationships": 0
     }
@@ -249,6 +270,12 @@ def run_extraction_pipeline(db: Session, document_id: int):
             add_evidence("decision", dec.id, d.evidence)
             stats["decisions"] += 1
             extracted_data.append(("decision", dec))
+            
+        for proj in getattr(res, 'projects', []):
+            p_obj = get_or_create_project(db, proj)
+            add_evidence("project", p_obj.id, proj.evidence)
+            stats["projects"] += 1
+            extracted_data.append(("project", p_obj))
             
         for pr in getattr(res, 'predictions', []):
             pred = get_or_create_prediction(db, pr)

@@ -5,10 +5,11 @@ from typing import Dict, Any, List
 from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from sqlalchemy import or_
-from ..models import Evidence, Event, Decision, Meeting, Person, Document
+from ..models import Evidence, Event, Decision, Meeting, Person, Document, Project
 import google.generativeai as genai
 
 class QAAIResponse(BaseModel):
+    is_factual: bool
     answer: str
     confidence: float
     decision: str = ""
@@ -46,6 +47,13 @@ def retrieve_relevant_context(db: Session, question: str):
         mtg_query = mtg_query.filter(or_(Meeting.title.ilike(f"%{kw}%"), Meeting.description.ilike(f"%{kw}%")))
     for m in mtg_query.all():
         context.append(f"Meeting [{m.id}]: {m.title}. {m.description}")
+        
+    # Keyword search across projects
+    proj_query = db.query(Project)
+    for kw in keywords:
+        proj_query = proj_query.filter(or_(Project.title.ilike(f"%{kw}%"), Project.description.ilike(f"%{kw}%")))
+    for p in proj_query.all():
+        context.append(f"Project [{p.id}]: {p.title}. {p.description}")
         
     # Keyword search across evidence
     ev_query = db.query(Evidence)
@@ -102,14 +110,16 @@ You MUST be friendly and conversational when the user greets you or asks about y
 Available Documents (Datasets) in the system: {doc_names}
 
 Follow these rules strictly:
-1. CONVERSATIONAL QUERIES: If the user says something conversational (e.g. "Hi", "Hello", "How are you?"), DO NOT use the insufficient evidence string. Reply warmly as MEMORA, the institutional memory assistant, and tell them you can answer questions based on the datasets.
-2. FACTUAL QUERIES: Answer using ONLY the supplied EVIDENCE CONTEXT.
-3. INSUFFICIENT EVIDENCE: If it's a FACTUAL query and you don't know the answer, explicitly state exactly: "INSUFFICIENT_EVIDENCE" in the answer field.
+1. Determine if the user's query is a FACTUAL question about the documents (e.g., "What was the decision?", "Who attended?"). Set "is_factual" to true.
+2. If it is a conversational query, greeting, or incomplete thought (e.g., "Hi", "how", "what can you do?"), set "is_factual" to false. Reply warmly as MEMORA, and tell them you can answer questions based on the datasets.
+3. If "is_factual" is true, answer using ONLY the supplied EVIDENCE CONTEXT below. Do not invent facts.
+4. If "is_factual" is true AND you cannot find the answer in the context, explicitly state exactly: "INSUFFICIENT_EVIDENCE" in the answer field.
 
 When answering factual questions based on evidence, identify WHAT happened, WHY it happened, WHO was involved, WHEN it happened, and WHAT decision followed. Supply the evidence IDs used.
 
 EXPECTED JSON FORMAT (Always return JSON):
 {{
+    "is_factual": true,
     "answer": "...",
     "confidence": 0.9,
     "decision": "...",
@@ -156,7 +166,7 @@ USER MESSAGE:
                         d = db.query(Decision).filter(Decision.id == ev.entity_id).first()
                         if d: rel_decisions.append({"id": d.id, "title": d.title})
                     
-            if "INSUFFICIENT_EVIDENCE" in parsed.answer:
+            if parsed.is_factual and "INSUFFICIENT_EVIDENCE" in parsed.answer:
                 parsed.answer = "I could not find sufficient evidence in the available institutional records."
                 
             return {
@@ -169,6 +179,9 @@ USER MESSAGE:
                 "related_people": []
             }
     except Exception as e:
-        print(f"QA Error: {str(e)}")
+        err_msg = str(e)
+        print(f"QA Error: {err_msg}")
+        if "API key not valid" in err_msg:
+            return {"answer": "Error: GEMINI_API_KEY is missing or invalid in your .env file. Please add a valid Google Gemini API key.", "decision": "", "evidence": [], "confidence": 0.0, "related_decisions": [], "related_events": [], "related_people": []}
         
     return empty_resp

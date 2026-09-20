@@ -8,7 +8,7 @@ const api = axios.create({
 
 export const getHealth = async () => (await api.get("/health")).data;
 export const getDashboardStats = async () => (await api.get("/dashboard/stats")).data;
-export const getTimeline = async () => (await api.get("/timeline")).data;
+export const getTimeline = async () => (await api.get("/dashboard/timeline")).data;
 
 // Documents
 export const uploadDocument = async (file: File) => {

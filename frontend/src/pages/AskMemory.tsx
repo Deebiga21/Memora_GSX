@@ -1,6 +1,6 @@
 import { Search, BrainCircuit, FileText, Calendar, Users, Network, ArrowRight, ShieldCheck, CornerDownRight, Mic, Volume2, Square } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
-import { askMemory } from "../services/api";
+import { askMemory, getDashboardStats } from "../services/api";
 import { Link } from "react-router-dom";
 
 export default function AskMemory() {
@@ -9,6 +9,7 @@ export default function AskMemory() {
   const [messages, setMessages] = useState<any[]>([]);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const [isEmptyDB, setIsEmptyDB] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   const scrollToBottom = () => {
@@ -18,6 +19,18 @@ export default function AskMemory() {
   useEffect(() => {
     scrollToBottom();
   }, [messages, loading]);
+
+  useEffect(() => {
+    getDashboardStats().then((stats: any) => {
+      if (stats.documents === 0 || stats.total_documents === 0 || stats.processed_documents === 0) {
+        setIsEmptyDB(true);
+      } else if (!stats.total_documents && stats.documents === 0) {
+        setIsEmptyDB(true);
+      } else if (stats.total_documents === 0) {
+         setIsEmptyDB(true);
+      }
+    }).catch(console.error);
+  }, []);
 
   const [wasSpoken, setWasSpoken] = useState(false);
 
@@ -95,14 +108,14 @@ export default function AskMemory() {
   };
 
   return (
-    <div className="h-[calc(100vh-80px)] flex flex-col pb-4">
+    <div className="h-[calc(100vh-80px)] flex flex-col pb-4 font-sans text-[#F4EFE6]">
       
       {messages.length === 0 ? (
         <div className="flex-1 flex flex-col items-center justify-center text-center space-y-3 mb-10 px-4">
-          <div className="w-16 h-16 bg-[#2C2A28] border border-[#A18A68] rounded-2xl flex items-center justify-center mb-6 shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]">
-             <BrainCircuit size={32} className="text-[#EADBB9]" />
+          <div className="w-16 h-16 bg-[#2C2A28] border border-[#5A544A] rounded-2xl flex items-center justify-center mb-6 shadow-[inset_0_2px_4px_rgba(0,0,0,0.5)]">
+             <BrainCircuit size={32} className="text-[#DFCEB6]" />
           </div>
-          <h1 className="text-4xl font-bold text-[#EADBB9] tracking-tight drop-shadow-md">Ask Your Institutional Memory</h1>
+          <h1 className="text-4xl font-bold text-[#F4EFE6] tracking-tight drop-shadow-md">Ask Your Institutional Memory</h1>
           <p className="text-lg text-[#A18A68] font-medium max-w-2xl mx-auto">Ask questions about what happened, why it happened, and trace the exact documents used as evidence.</p>
         </div>
       ) : (
@@ -111,55 +124,54 @@ export default function AskMemory() {
             {messages.map((msg, idx) => (
               <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {msg.role === 'user' ? (
-                  <div className="max-w-[80%] bg-[#A18A68] text-[#2C2A28] rounded-2xl rounded-tr-sm px-6 py-4 shadow-md text-lg font-medium">
+                  <div className="max-w-[80%] bg-[#DFCEB6] text-[#2C2A28] rounded-2xl rounded-tr-sm px-6 py-4 shadow-md text-lg font-medium">
                     {msg.content}
                   </div>
                 ) : (
                   <div className="w-full max-w-[90%]">
                     {msg.error ? (
-                       <div className="bg-[#38342B] border border-[#83633F] rounded-2xl p-6 shadow-xl flex items-center gap-4 text-left">
-                          <div className="w-10 h-10 bg-[#201D19] rounded-full flex items-center justify-center text-[#D0BF9F] flex-shrink-0">
+                       <div className="bg-[#34322F] border border-[#3D3A35] rounded-2xl p-6 shadow-xl flex items-center gap-4 text-left">
+                          <div className="w-10 h-10 bg-[#201D19] rounded-full flex items-center justify-center text-[#DFCEB6] flex-shrink-0">
                              <Search size={18} />
                           </div>
                           <div>
-                            <h3 className="font-bold text-[#EADBB9]">No evidence found</h3>
+                            <h3 className="font-bold text-[#F4EFE6]">No evidence found</h3>
                             <p className="text-[#A18A68] text-sm">{msg.error}</p>
                           </div>
                        </div>
                     ) : (
                        <div className="space-y-4">
-                          <div className="bg-[#EADBB9] border-2 border-[#D0BF9F] rounded-2xl p-6 shadow-xl relative overflow-hidden"
-                               style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cream-paper.png')" }}>
+                          <div className="bg-[#34322F] border border-[#5A544A] rounded-2xl p-6 shadow-xl relative overflow-hidden">
                              <div className="absolute top-0 left-0 w-2 h-full bg-[#83633F]"></div>
                              
                              <div className="flex justify-between items-start mb-4">
                                <div className="flex items-center gap-2">
-                                  <ShieldCheck size={16} className="text-[#2C2A28]" />
-                                  <span className="text-[11px] font-black text-[#2C2A28] uppercase tracking-widest">Grounded AI Answer</span>
+                                  <ShieldCheck size={16} className="text-[#DFCEB6]" />
+                                  <span className="text-[11px] font-black text-[#DFCEB6] uppercase tracking-widest">Grounded AI Answer</span>
                                   
-                                  <button onClick={() => toggleSpeak(msg.answer)} className="ml-4 p-1 rounded-md hover:bg-[#D4C4A8] text-[#8C7A5E] transition-colors flex items-center gap-1.5 text-[10px] font-bold">
+                                  <button onClick={() => toggleSpeak(msg.answer)} className="ml-4 p-1 rounded-md hover:bg-[#3D3A35] text-[#8C7A5E] hover:text-[#DFCEB6] transition-colors flex items-center gap-1.5 text-[10px] font-bold">
                                     {isSpeaking ? <><Square size={10}/> Stop</> : <><Volume2 size={12}/> Speak</>}
                                   </button>
                                </div>
                                {msg.confidence && (
-                                 <div className="bg-[#D4C4A8] text-[#38342B] px-2 py-0.5 rounded-full text-[10px] font-bold border border-[#C6B395] shadow-sm">
+                                 <div className="bg-[#2C2A28] text-[#F4EFE6] px-2 py-0.5 rounded-full text-[10px] font-bold border border-[#5A544A] shadow-sm">
                                    {(msg.confidence * 100).toFixed(0)}% Confidence
                                  </div>
                                )}
                              </div>
                              
-                             <p className="text-lg text-[#201D19] font-semibold leading-relaxed mb-6">
+                             <p className="text-lg text-[#F4EFE6] font-semibold leading-relaxed mb-6">
                                "{msg.answer}"
                              </p>
                              
                              {msg.related_decisions?.length > 0 && (
-                               <div className="bg-[#DFCEB6] border border-[#C6B395] rounded-xl p-4 shadow-inner">
+                               <div className="bg-[#201D19] border border-[#3D3A35] rounded-xl p-4 shadow-inner">
                                   <div className="text-[9px] font-black text-[#8C7A5E] uppercase tracking-widest mb-2 flex items-center gap-1.5">
                                      <Network size={12}/> Related Decisions
                                   </div>
                                   <div className="space-y-1.5">
                                     {msg.related_decisions.map((d: any, i: number) => (
-                                      <Link key={i} to={`/decisions/${d.id}/trace`} className="block text-sm font-bold text-[#201D19] hover:text-[#83633F] transition-colors underline decoration-[#C6B395] underline-offset-4">
+                                      <Link key={i} to={`/decisions/${d.id}/trace`} className="block text-sm font-bold text-[#DFCEB6] hover:text-[#F4EFE6] transition-colors underline decoration-[#83633F] underline-offset-4">
                                         {d.title}
                                       </Link>
                                     ))}
@@ -169,16 +181,16 @@ export default function AskMemory() {
                           </div>
 
                           {msg.evidence?.length > 0 && (
-                            <div className="space-y-2 pl-4 border-l-2 border-[#5A544A]">
+                            <div className="space-y-2 pl-4 border-l-2 border-[#83633F]">
                               <h3 className="text-xs font-bold text-[#A18A68] flex items-center gap-1.5"><FileText size={12} /> Supporting Evidence Sources</h3>
                               <div className="flex gap-2 overflow-x-auto pb-2">
                                 {msg.evidence.map((ev: any, i: number) => (
-                                  <Link to={`/documents/${ev.document_id}`} key={i} className="min-w-[280px] bg-[#2C2A28] border border-[#5A544A] rounded-xl p-4 shadow-md shrink-0 hover:bg-[#38342B] transition-colors block">
+                                  <Link to={`/documents/${ev.document_id}`} key={i} className="min-w-[280px] bg-[#2C2A28] border border-[#5A544A] rounded-xl p-4 shadow-md shrink-0 hover:bg-[#3D3A35] transition-colors block">
                                      <div className="text-[9px] font-black text-[#A18A68] uppercase tracking-widest mb-1.5">
                                         Source {i + 1} • Page {ev.page}
                                      </div>
-                                     <div className="text-xs font-bold text-[#EADBB9] mb-1 truncate">{ev.document}</div>
-                                     <div className="text-[10px] text-[#D0BF9F] italic line-clamp-3 leading-relaxed">
+                                     <div className="text-xs font-bold text-[#F4EFE6] mb-1 truncate">{ev.document}</div>
+                                     <div className="text-[10px] text-[#8C7A5E] italic line-clamp-3 leading-relaxed">
                                         "{ev.snippet}"
                                      </div>
                                   </Link>
@@ -195,8 +207,8 @@ export default function AskMemory() {
             
             {loading && (
               <div className="flex justify-start">
-                <div className="bg-[#2C2A28] border border-[#5A544A] rounded-2xl rounded-tl-sm px-6 py-4 flex items-center gap-3">
-                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#D0BF9F]"></div>
+                <div className="bg-[#34322F] border border-[#5A544A] rounded-2xl rounded-tl-sm px-6 py-4 flex items-center gap-3">
+                   <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#DFCEB6]"></div>
                    <div className="text-[#A18A68] text-sm font-medium">Synthesizing institutional knowledge...</div>
                 </div>
               </div>
@@ -214,20 +226,19 @@ export default function AskMemory() {
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder="Ask a question about the datasets..." 
-            className="w-full pl-6 pr-32 py-4 bg-[#EADBB9] border-2 border-[#D0BF9F] rounded-2xl text-base text-[#38342B] font-medium focus:outline-none focus:border-[#A18A68] focus:ring-4 focus:ring-[#83633F]/20 transition-all shadow-inner placeholder:text-[#A18A68]/70"
-            style={{ backgroundImage: "url('https://www.transparenttextures.com/patterns/cream-paper.png')" }}
+            className="w-full pl-6 pr-32 py-4 bg-[#2C2A28] border border-[#5A544A] rounded-2xl text-base text-[#F4EFE6] font-medium focus:outline-none focus:border-[#83633F] focus:ring-4 focus:ring-[#83633F]/20 transition-all shadow-inner placeholder:text-[#A18A68]"
           />
           <button 
             type="button"
             onClick={startListening}
-            className={`absolute inset-y-2 right-[100px] px-2 rounded-xl flex items-center transition-colors ${isListening ? 'bg-red-100 text-red-600 animate-pulse' : 'bg-transparent text-[#A18A68] hover:bg-[#D4C4A8]'}`}
+            className={`absolute inset-y-2 right-[100px] px-2 rounded-xl flex items-center transition-colors ${isListening ? 'bg-[#3D3A35] text-[#DFCEB6] animate-pulse' : 'bg-transparent text-[#8C7A5E] hover:bg-[#3D3A35] hover:text-[#DFCEB6]'}`}
           >
             <Mic size={18} />
           </button>
           <button 
             type="submit"
             disabled={loading || !query.trim()}
-            className="absolute inset-y-2 right-2 px-5 bg-[#2C2A28] text-[#D0BF9F] rounded-xl font-bold text-sm hover:bg-[#38342B] border border-[#5A544A] transition-colors disabled:opacity-50 flex items-center justify-center shadow-sm"
+            className="absolute inset-y-2 right-2 px-5 bg-[#EADBB9] text-[#2C2A28] rounded-xl font-bold text-sm hover:bg-[#DFCEB6] border border-[#83633F] transition-colors disabled:opacity-50 flex items-center justify-center shadow-sm"
           >
             <ArrowRight size={20} />
           </button>

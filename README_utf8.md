@@ -1,8 +1,20 @@
-﻿# MEMORA MVP
+# MEMORA MVP
 
 "An AI-powered institutional memory and decision traceability platform."
 
 This repository contains the foundational code for MEMORA. It includes a modern React frontend with all 8 core interface screens built precisely to spec.
+
+## Core Cognitive Pipeline
+
+MEMORA operates on an 8-step flow:
+1. **UPLOAD A PDF** - Ingest raw institutional records.
+2. **UNDERSTAND THE PDF** - Read and process text page by page.
+3. **EXTRACT ITS INFORMATION** - AI identifies people, events, meetings, and actions.
+4. **SAVE IT AS MEMORY** - Persist extracted entities to the database.
+5. **CONNECT IT WITH OTHER DOCUMENTS** - Form relationships across the entire dataset.
+6. **BUILD DECISIONS/TIMELINE** - Visually trace the chronological journey of a decision.
+7. **ANSWER QUESTIONS FROM THAT MEMORY** - Use the RAG engine to find grounded answers.
+8. **FORECAST POSSIBLE NEXT DEVELOPMENTS** - Predict risks, deadlines, and required actions based on past memory.
 
 ## Project Structure
 - `frontend/` - React frontend powered by Vite, Tailwind CSS, Framer Motion, and Recharts.

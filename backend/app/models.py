@@ -103,6 +103,18 @@ class Prediction(Base):
     created_at = Column(DateTime, default=get_utc_now)
     updated_at = Column(DateTime, default=get_utc_now, onupdate=get_utc_now)
 
+class Project(Base):
+    __tablename__ = "projects"
+    id = Column(Integer, primary_key=True, index=True)
+    title = Column(String, index=True)
+    status = Column(String, default="proposed") # proposed, active, completed, delayed
+    description = Column(Text, nullable=True)
+    budget = Column(String, nullable=True)
+    timeline = Column(String, nullable=True)
+    confidence = Column(Float, default=1.0)
+    created_at = Column(DateTime, default=get_utc_now)
+    updated_at = Column(DateTime, default=get_utc_now, onupdate=get_utc_now)
+
 class Relationship(Base):
     __tablename__ = "relationships"
     id = Column(Integer, primary_key=True, index=True)

@@ -1,20 +1,21 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from ..database import get_db
-from ..models import Person, Event, Meeting, Decision, Document, Evidence, Relationship
+from ..models import Person, Event, Meeting, Decision, Document, Evidence, Relationship, Project, Prediction
 from datetime import datetime
 
 router = APIRouter()
 
-@router.get("/dashboard/stats")
+@router.get("/stats")
 def get_dashboard_stats(db: Session = Depends(get_db)):
     docs = db.query(Document).count()
     people = db.query(Person).count()
     events = db.query(Event).count()
     meetings = db.query(Meeting).count()
     decisions = db.query(Decision).count()
+    projects = db.query(Project).count()
     evidence = db.query(Evidence).count()
-    from ..models import Prediction
+    relationships = db.query(Relationship).count()
     predictions = db.query(Prediction).count()
     
     processed_docs = db.query(Document).filter(Document.status == "processed").count()
@@ -43,6 +44,7 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
             "events": events,
             "meetings": meetings,
             "decisions": decisions,
+            "projects": projects,
             "evidence": evidence,
             "relationships": relationships,
             "predictions": predictions
@@ -63,6 +65,7 @@ def get_timeline(db: Session = Depends(get_db)):
     events = db.query(Event).all()
     meetings = db.query(Meeting).all()
     decisions = db.query(Decision).all()
+    documents = db.query(Document).all()
     
     timeline = []
     for e in events:
@@ -71,6 +74,8 @@ def get_timeline(db: Session = Depends(get_db)):
         if m.meeting_date: timeline.append({"id": f"meeting_{m.id}", "title": m.title, "date": m.meeting_date.isoformat(), "type": "Meeting"})
     for d in decisions:
         if d.decision_date: timeline.append({"id": f"decision_{d.id}", "title": d.title, "date": d.decision_date.isoformat(), "type": "Decision"})
+    for doc in documents:
+        if doc.created_at: timeline.append({"id": f"doc_{doc.id}", "title": doc.filename, "date": doc.created_at.isoformat(), "type": "Document"})
         
-    timeline.sort(key=lambda x: x["date"], reverse=True)
+    timeline.sort(key=lambda x: x["date"])
     return timeline

@@ -31,7 +31,7 @@ export default function EvidenceViewer() {
   if (loading) {
     return (
       <div className="h-full flex items-center justify-center">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#A18A68]"></div>
       </div>
     );
   }
@@ -42,16 +42,16 @@ export default function EvidenceViewer() {
       {/* Top Bar */}
       <div className="flex items-center justify-between mb-4">
          <div className="flex items-center gap-4">
-            <Link to={-1 as any} className="p-2 border border-slate-200 rounded-lg hover:bg-white text-slate-500 hover:text-slate-900 bg-slate-50 transition-colors">
+            <Link to={-1 as any} className="p-2 border border-[#5A544A] rounded-lg hover:bg-[#34322F] text-[#8C7A5E] hover:text-[#F4EFE6] bg-[#2C2A28] transition-colors">
                <ArrowLeft size={16} />
             </Link>
             <div>
-               <h1 className="text-xl font-bold text-[#0a192f] leading-tight">Evidence Trace</h1>
-               <p className="text-xs font-medium text-slate-500">Source Verification</p>
+               <h1 className="text-xl font-bold text-[#F4EFE6] leading-tight">Evidence Trace</h1>
+               <p className="text-xs font-medium text-[#8C7A5E]">Source Verification</p>
             </div>
          </div>
          <div className="flex items-center gap-3">
-            <span className="flex items-center gap-1.5 px-3 py-1.5 bg-green-50 border border-green-100 text-green-700 rounded-md text-xs font-bold">
+            <span className="flex items-center gap-1.5 px-3 py-1.5 bg-[#201D19] border border-[#5A544A] text-[#A18A68] rounded-md text-xs font-bold">
                <CheckCircle2 size={14} /> AI Verified
             </span>
          </div>
@@ -61,42 +61,42 @@ export default function EvidenceViewer() {
       <div className="flex-1 flex gap-6 overflow-hidden">
          
          {/* LEFT: Document Viewer (Simulated PDF rendering) */}
-         <div className="flex-1 bg-slate-200/50 rounded-xl border border-slate-200 overflow-hidden flex flex-col relative shadow-inner">
-            <div className="h-12 bg-white border-b border-slate-200 flex items-center justify-between px-4 z-10">
-               <div className="flex items-center gap-2 text-sm font-bold text-slate-700">
-                  <FileText size={16} className="text-blue-500" />
+         <div className="flex-1 bg-[#201D19] rounded-xl border border-[#5A544A] overflow-hidden flex flex-col relative shadow-inner">
+            <div className="h-12 bg-[#2C2A28] border-b border-[#5A544A] flex items-center justify-between px-4 z-10">
+               <div className="flex items-center gap-2 text-sm font-bold text-[#F4EFE6]">
+                  <FileText size={16} className="text-[#A18A68]" />
                   {evidence.document}
                </div>
-               <div className="flex items-center gap-4 text-xs font-medium text-slate-500">
+               <div className="flex items-center gap-4 text-xs font-medium text-[#8C7A5E]">
                   <span>Page {evidence.page} of 12</span>
                   <div className="flex items-center gap-2">
-                     <button className="p-1 hover:text-slate-900"><Search size={14}/></button>
-                     <button className="p-1 hover:text-slate-900"><Maximize2 size={14}/></button>
+                     <button className="p-1 hover:text-[#F4EFE6]"><Search size={14}/></button>
+                     <button className="p-1 hover:text-[#F4EFE6]"><Maximize2 size={14}/></button>
                   </div>
                </div>
             </div>
             
             <div className="flex-1 overflow-auto p-8 flex justify-center items-start">
                {/* Mock PDF Page */}
-               <div className="w-full max-w-2xl bg-white shadow-xl min-h-[800px] p-12 relative border border-slate-200">
+               <div className="w-full max-w-2xl bg-[#2C2A28] shadow-xl min-h-[800px] p-12 relative border border-[#5A544A]">
                   
                   {/* Document Header */}
-                  <div className="border-b-2 border-slate-900 pb-4 mb-8 text-center">
-                     <h2 className="text-2xl font-serif font-bold text-slate-900 uppercase tracking-widest">Project Committee</h2>
-                     <p className="text-sm font-serif text-slate-500 mt-1">Meeting Minutes - August 12, 2026</p>
+                  <div className="border-b-2 border-[#83633F] pb-4 mb-8 text-center">
+                     <h2 className="text-2xl font-serif font-bold text-[#F4EFE6] uppercase tracking-widest">Project Committee</h2>
+                     <p className="text-sm font-serif text-[#8C7A5E] mt-1">Meeting Minutes - August 12, 2026</p>
                   </div>
 
                   {/* Document Content */}
-                  <div className="space-y-6 font-serif text-slate-700 leading-relaxed text-justify">
+                  <div className="space-y-6 font-serif text-[#F4EFE6] leading-relaxed text-justify">
                      <p>The meeting was called to order at 10:00 AM. Attendance included Arun Kumar (Project Lead), Priya (Operations), and Ravi (Hardware Engineering).</p>
                      <p>Ravi provided an update on the current status of the Phase 2 hardware integration. It was noted that vendor shipments for critical components were delayed by 14 days, creating a cascading effect on the QA timeline.</p>
                      
                      {/* Highlighted Evidence */}
-                     <div className="bg-yellow-200/40 border-l-4 border-yellow-400 p-2 -mx-3 my-4 rounded-r relative group cursor-pointer">
-                        <div className="absolute -left-12 top-1 w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                     <div className="bg-[#DFCEB6]/30 border-l-4 border-[#83633F] p-2 -mx-3 my-4 rounded-r relative group cursor-pointer">
+                        <div className="absolute -left-12 top-1 w-8 h-8 bg-[#34322F] text-[#F4EFE6] rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
                            <Network size={14}/>
                         </div>
-                        <p className="font-medium text-slate-900">
+                        <p className="font-medium text-[#F4EFE6]">
                            Due to the hardware testing delay, the project committee has agreed that the original testing schedule could not be completed. The project deadline is hereby extended to September 20th.
                         </p>
                      </div>
@@ -110,64 +110,64 @@ export default function EvidenceViewer() {
          </div>
 
          {/* RIGHT: Evidence Details */}
-         <div className="w-[400px] bg-white rounded-xl border border-slate-200 shadow-sm flex flex-col overflow-hidden">
-            <div className="p-5 border-b border-slate-100 bg-slate-50/50">
-               <h3 className="font-bold text-[#0a192f] text-sm uppercase tracking-wider">Extraction Details</h3>
+         <div className="w-[400px] bg-[#2C2A28] rounded-xl border border-[#5A544A] shadow-sm flex flex-col overflow-hidden">
+            <div className="p-5 border-b border-[#3D3A35] bg-[#201D19]">
+               <h3 className="font-bold text-[#F4EFE6] text-sm uppercase tracking-wider">Extraction Details</h3>
             </div>
             
             <div className="p-6 space-y-8 overflow-auto flex-1">
                
                <div>
-                  <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                  <div className="text-[10px] font-black text-[#8C7A5E] uppercase tracking-widest mb-2 flex items-center gap-1.5">
                      <Search size={12}/> Exact Match
                   </div>
-                  <div className="bg-slate-50 p-4 rounded-lg border border-slate-200 text-sm font-medium text-slate-800 leading-relaxed">
+                  <div className="bg-[#34322F] p-4 rounded-lg border border-[#5A544A] text-sm font-medium text-[#F4EFE6] leading-relaxed">
                      "{evidence.extract}"
                   </div>
                </div>
 
                <div className="grid grid-cols-2 gap-4">
                   <div>
-                     <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Confidence</div>
-                     <span className="px-2.5 py-1 bg-green-50 text-green-700 font-bold rounded-md text-sm border border-green-200">
+                     <div className="text-[10px] font-black text-[#8C7A5E] uppercase tracking-widest mb-1">Confidence</div>
+                     <span className="px-2.5 py-1 bg-[#201D19] text-[#A18A68] font-bold rounded-md text-sm border border-[#5A544A]">
                         {evidence.confidence}%
                      </span>
                   </div>
                   <div>
-                     <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Page</div>
-                     <div className="text-sm font-bold text-slate-800">{evidence.page}</div>
+                     <div className="text-[10px] font-black text-[#8C7A5E] uppercase tracking-widest mb-1">Page</div>
+                     <div className="text-sm font-bold text-[#F4EFE6]">{evidence.page}</div>
                   </div>
                </div>
 
-               <div className="pt-6 border-t border-slate-100 space-y-5">
-                  <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Mapped Relationships</div>
+               <div className="pt-6 border-t border-[#3D3A35] space-y-5">
+                  <div className="text-[10px] font-black text-[#8C7A5E] uppercase tracking-widest mb-2">Mapped Relationships</div>
                   
                   <div className="space-y-3">
-                     <div className="flex gap-3 p-3 bg-blue-50/50 rounded-lg border border-blue-100/50">
-                        <Network size={16} className="text-blue-500 shrink-0 mt-0.5" />
+                     <div className="flex gap-3 p-3 bg-[#34322F] rounded-lg border border-[#3D3A35]">
+                        <Network size={16} className="text-[#A18A68] shrink-0 mt-0.5" />
                         <div>
-                           <div className="text-[10px] font-bold text-blue-500 uppercase tracking-wider mb-0.5">Supports Decision</div>
-                           <Link to="/decisions/1/trace" className="text-sm font-bold text-slate-900 hover:text-blue-600 transition-colors">
+                           <div className="text-[10px] font-bold text-[#A18A68] uppercase tracking-wider mb-0.5">Supports Decision</div>
+                           <Link to="/decisions/1/trace" className="text-sm font-bold text-[#F4EFE6] hover:text-[#A18A68] transition-colors">
                               {evidence.related_decision}
                            </Link>
                         </div>
                      </div>
 
-                     <div className="flex gap-3 p-3 bg-purple-50/50 rounded-lg border border-purple-100/50">
-                        <Calendar size={16} className="text-purple-500 shrink-0 mt-0.5" />
+                     <div className="flex gap-3 p-3 bg-[#34322F] rounded-lg border border-[#3D3A35]">
+                        <Calendar size={16} className="text-[#A18A68] shrink-0 mt-0.5" />
                         <div>
-                           <div className="text-[10px] font-bold text-purple-500 uppercase tracking-wider mb-0.5">Detected Event</div>
-                           <div className="text-sm font-semibold text-slate-800">
+                           <div className="text-[10px] font-bold text-[#A18A68] uppercase tracking-wider mb-0.5">Detected Event</div>
+                           <div className="text-sm font-semibold text-[#F4EFE6]">
                               {evidence.related_event}
                            </div>
                         </div>
                      </div>
 
-                     <div className="flex gap-3 p-3 bg-indigo-50/50 rounded-lg border border-indigo-100/50">
-                        <Video size={16} className="text-indigo-500 shrink-0 mt-0.5" />
+                     <div className="flex gap-3 p-3 bg-[#34322F] rounded-lg border border-[#3D3A35]">
+                        <Video size={16} className="text-[#A18A68] shrink-0 mt-0.5" />
                         <div>
-                           <div className="text-[10px] font-bold text-indigo-500 uppercase tracking-wider mb-0.5">Context Meeting</div>
-                           <div className="text-sm font-semibold text-slate-800">
+                           <div className="text-[10px] font-bold text-[#A18A68] uppercase tracking-wider mb-0.5">Context Meeting</div>
+                           <div className="text-sm font-semibold text-[#F4EFE6]">
                               {evidence.related_meeting}
                            </div>
                         </div>
@@ -177,8 +177,8 @@ export default function EvidenceViewer() {
 
             </div>
             
-            <div className="p-4 border-t border-slate-100 bg-slate-50">
-               <button className="w-full py-2.5 bg-white border border-slate-300 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors flex items-center justify-center gap-2 shadow-sm">
+            <div className="p-4 border-t border-[#3D3A35] bg-[#201D19]">
+               <button className="w-full py-2.5 bg-[#2C2A28] border border-[#5A544A] text-[#F4EFE6] rounded-lg text-sm font-bold hover:bg-[#34322F] transition-colors flex items-center justify-center gap-2 shadow-sm">
                   View Full Document <ExternalLink size={16} />
                </button>
             </div>

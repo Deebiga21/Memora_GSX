@@ -15,7 +15,7 @@ export function DashboardLayout() {
 
   const navItems = [
     { name: "Dashboard", path: "/dashboard" },
-    { name: "Documents", path: "/documents" },
+    { name: "Extraction Lab", path: "/documents" },
     { name: "Memory", path: "/memory" },
     { name: "Decisions", path: "/decisions" },
     { name: "Timeline", path: "/timeline" },

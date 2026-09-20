@@ -58,6 +58,20 @@ class EventResponse(EventBase):
     updated_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
+class ProjectBase(BaseModel):
+    title: str
+    status: Optional[str] = None
+    description: Optional[str] = None
+    budget: Optional[str] = None
+    timeline: Optional[str] = None
+    confidence: float = 1.0
+
+class ProjectResponse(ProjectBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
 class MeetingBase(BaseModel):
     title: str
     meeting_date: Optional[datetime] = None
