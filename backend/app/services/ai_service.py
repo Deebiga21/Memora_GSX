@@ -43,6 +43,13 @@ class ExtractedDecision(BaseModel):
     status: Optional[str] = Field(description="active, implemented, revised, rejected, unknown", default="active")
     evidence: Optional[AIEvidence] = None
 
+class ExtractedPrediction(BaseModel):
+    type: str = Field(description="UPCOMING_DEADLINE, PLANNED_MEETING, EXPECTED_ACTION, DEPENDENCY, POTENTIAL_RISK, FOLLOW_UP")
+    description: str = Field(description="Description of the predicted or future event/action")
+    expected_date: Optional[str] = Field(description="Expected date in YYYY-MM-DD format if known", default=None)
+    basis: str = Field(description="The explicit basis or reason stated in the document")
+    evidence: Optional[AIEvidence] = None
+
 class AIRelationship(BaseModel):
     source_entity: str = Field(description="Name/Title of the source entity")
     relationship_type: str = Field(description="E.g., triggered, resulted_in, supported_by, followed_by, participated_in")
@@ -54,6 +61,7 @@ class AIExtractionResult(BaseModel):
     events: List[ExtractedEvent] = Field(default_factory=list)
     meetings: List[ExtractedMeeting] = Field(default_factory=list)
     decisions: List[ExtractedDecision] = Field(default_factory=list)
+    predictions: List[ExtractedPrediction] = Field(default_factory=list)
     relationships: List[AIRelationship] = Field(default_factory=list)
 
 def extract_entities_from_chunk(text: str) -> Optional[AIExtractionResult]:
@@ -68,12 +76,13 @@ def extract_entities_from_chunk(text: str) -> Optional[AIExtractionResult]:
     prompt = f"""
 You are an institutional memory extraction engine.
 Analyze only the supplied institutional document text.
-Extract people, events, meetings and decisions.
+Extract people, events, meetings, decisions, and future predictions/foresight.
 Do not invent facts.
 Do not infer unsupported information as fact.
 If information is missing, return null or an empty array.
 For every important entity or decision, identify the page number and supporting evidence snippet based on the '--- PAGE X ---' markers in the text.
 A decision should include: title, date, reason, action, impact.
+A prediction should identify upcoming deadlines, planned meetings, expected actions, or potential risks EXPLICITLY stated in the text.
 Distinguish explicitly stated facts from inferred relationships.
 Only create a relationship when the document provides sufficient evidence.
 Return valid JSON matching the following schema.
@@ -84,6 +93,7 @@ EXPECTED JSON FORMAT:
     "events": [{{ "title": "...", "date": "...", "type": "...", "description": "...", "evidence": {{...}} }}],
     "meetings": [{{ "title": "...", "date": "...", "type": "...", "description": "...", "participants": ["..."], "evidence": {{...}} }}],
     "decisions": [{{ "title": "...", "date": "...", "reason": "...", "action": "...", "impact": "...", "status": "...", "evidence": {{...}} }}],
+    "predictions": [{{ "type": "UPCOMING_DEADLINE", "description": "...", "expected_date": "...", "basis": "...", "evidence": {{...}} }}],
     "relationships": [{{ "source_entity": "...", "relationship_type": "...", "target_entity": "...", "evidence": {{...}} }}]
 }}
 
@@ -159,6 +169,16 @@ def get_or_create_decision(db: Session, d: ExtractedDecision) -> Decision:
     db.refresh(new_d)
     return new_d
 
+def get_or_create_prediction(db: Session, p: ExtractedPrediction) -> Prediction:
+    existing = db.query(Prediction).filter(Prediction.description.ilike(f"%{p.description}%")).first()
+    if existing: return existing
+    dt = parse_date(p.expected_date)
+    new_p = Prediction(prediction_type=p.type, description=p.description, expected_date=dt, basis=p.basis)
+    db.add(new_p)
+    db.commit()
+    db.refresh(new_p)
+    return new_p
+
 def run_extraction_pipeline(db: Session, document_id: int):
     chunks = get_document_chunks(db, document_id, chunk_size=5)
     
@@ -168,6 +188,7 @@ def run_extraction_pipeline(db: Session, document_id: int):
         "events": 0,
         "meetings": 0,
         "decisions": 0,
+        "predictions": 0,
         "evidence": 0,
         "relationships": 0
     }
@@ -228,6 +249,12 @@ def run_extraction_pipeline(db: Session, document_id: int):
             add_evidence("decision", dec.id, d.evidence)
             stats["decisions"] += 1
             extracted_data.append(("decision", dec))
+            
+        for pr in getattr(res, 'predictions', []):
+            pred = get_or_create_prediction(db, pr)
+            add_evidence("prediction", pred.id, pr.evidence)
+            stats["predictions"] += 1
+            extracted_data.append(("prediction", pred))
             
         ai_relationships.extend(res.relationships)
             

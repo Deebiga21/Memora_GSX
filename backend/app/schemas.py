@@ -116,6 +116,7 @@ class RelationshipResponse(RelationshipBase):
 
 class AskRequest(BaseModel):
     question: str
+    history: Optional[List[dict]] = []
 
 class AskResponse(BaseModel):
     answer: str

@@ -133,8 +133,8 @@ export default function DecisionDNA() {
              
              <div className="border-t border-[#5A544A] pt-6 mt-4">
                 <div className="text-[10px] font-bold text-[#8C7A5E] uppercase tracking-wider mb-3">Source Evidence</div>
-                {trace.evidence.map((ev: any, i: number) => (
-                  <div key={i} className="flex items-center justify-between bg-[#38342B] border border-[#A18A68] p-4 rounded-xl mb-3 shadow-sm hover:bg-[#433F34] transition-colors cursor-pointer">
+                 {trace.evidence.map((ev: any, i: number) => (
+                  <Link to={`/documents/${ev.document_id}`} key={i} className="flex items-center justify-between bg-[#38342B] border border-[#A18A68] p-4 rounded-xl mb-3 shadow-sm hover:bg-[#433F34] transition-colors cursor-pointer block">
                     <div className="flex items-center gap-4">
                       <div className="p-2.5 bg-[#201D19] rounded-lg text-[#D0BF9F] border border-[#5A544A]">
                          <FileText size={20}/>
@@ -145,7 +145,7 @@ export default function DecisionDNA() {
                       </div>
                     </div>
                     <ArrowRight size={16} className="text-[#8C7A5E]"/>
-                  </div>
+                  </Link>
                 ))}
              </div>
           </div>

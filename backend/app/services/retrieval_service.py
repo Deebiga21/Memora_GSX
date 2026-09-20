@@ -52,11 +52,13 @@ def retrieve_relevant_context(db: Session, question: str):
     for kw in keywords:
         ev_query = ev_query.filter(Evidence.snippet.ilike(f"%{kw}%"))
     for ev in ev_query.all():
-        context.append(f"Evidence [{ev.id}] (Entity {ev.entity_type} {ev.entity_id}): {ev.snippet}")
+        doc = db.query(Document).filter(Document.id == ev.document_id).first()
+        doc_name = doc.filename if doc else "Unknown"
+        context.append(f"Evidence [{ev.id}] from Document '{doc_name}' Page {ev.page_number} (Entity {ev.entity_type} {ev.entity_id}): {ev.snippet}")
         
     return context
 
-def answer_memory_question(db: Session, question: str) -> Dict[str, Any]:
+def answer_memory_question(db: Session, question: str, history: List[dict] = None) -> Dict[str, Any]:
     api_key = (os.getenv("GEMINI_API_KEY") or os.getenv("NVIDIA_API_KEY"))
     if not api_key:
         return {"answer": "API key missing.", "decision": "", "evidence": [], "confidence": 0.0, "related_decisions": [], "related_events": [], "related_people": []}
@@ -74,6 +76,10 @@ def answer_memory_question(db: Session, question: str) -> Dict[str, Any]:
     # Fetch all document names so the chatbot knows what datasets are available
     docs = db.query(Document).all()
     doc_names = ", ".join([d.filename for d in docs]) if docs else "None"
+    
+    hist_str = ""
+    if history:
+        hist_str = "CONVERSATION HISTORY:\n" + "\n".join([f"{'User' if m['role']=='user' else 'Assistant'}: {m['content']}" for m in history[-5:]])
 
     prompt = f"""
 You are MEMORA's intelligent institutional memory assistant.
@@ -95,6 +101,8 @@ EXPECTED JSON FORMAT (Always return JSON):
     "decision": "...",
     "evidence_ids": [1, 2]
 }}
+
+{hist_str}
 
 EVIDENCE CONTEXT:
 {chr(10).join(context)}
@@ -125,6 +133,7 @@ USER MESSAGE:
                 if ev:
                     doc = db.query(Document).filter(Document.id == ev.document_id).first()
                     evidence_list.append({
+                        "document_id": doc.id if doc else None,
                         "document": doc.filename if doc else "Unknown",
                         "page": ev.page_number,
                         "snippet": ev.snippet

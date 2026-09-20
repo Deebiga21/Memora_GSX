@@ -168,3 +168,123 @@ def process_document(id: int, db: Session = Depends(get_db)):
         doc.error_message = str(e)
         db.commit()
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/{id}/extracted_flow")
+def get_extracted_flow(id: int, db: Session = Depends(get_db)):
+    from ..models import Evidence, Person, Event, Meeting, Decision
+    
+    # Get all evidence for this doc
+    evidences = db.query(Evidence).filter(Evidence.document_id == id).all()
+    
+    people = []
+    flow_items = []
+    
+    for ev in evidences:
+        if ev.entity_type == "person":
+            p = db.query(Person).filter(Person.id == ev.entity_id).first()
+            if p and p not in people: people.append(p)
+        elif ev.entity_type == "event":
+            e = db.query(Event).filter(Event.id == ev.entity_id).first()
+            if e: flow_items.append({"type": "Event", "date": e.event_date, "title": e.title, "description": e.description})
+        elif ev.entity_type == "meeting":
+            m = db.query(Meeting).filter(Meeting.id == ev.entity_id).first()
+            if m: flow_items.append({"type": "Meeting", "date": m.meeting_date, "title": m.title, "description": m.description})
+        elif ev.entity_type == "decision":
+            d = db.query(Decision).filter(Decision.id == ev.entity_id).first()
+            if d: flow_items.append({"type": "Decision", "date": d.decision_date, "title": d.title, "description": d.reason, "action": d.action})
+            
+    # Deduplicate flow items based on title and type
+    unique_flow = []
+    seen = set()
+    for item in flow_items:
+        key = f"{item['type']}_{item['title']}"
+        if key not in seen:
+            seen.add(key)
+            unique_flow.append(item)
+            
+    # Sort by date
+    unique_flow.sort(key=lambda x: str(x["date"]) if x["date"] else "0000-00-00")
+    
+    # Get predictions for this doc
+    from ..models import Prediction
+    predictions = []
+    for ev in evidences:
+        if ev.entity_type == "prediction":
+            pr = db.query(Prediction).filter(Prediction.id == ev.entity_id).first()
+            if pr:
+                predictions.append({
+                    "type": pr.prediction_type,
+                    "description": pr.description,
+                    "expected_date": pr.expected_date,
+                    "basis": pr.basis
+                })
+
+    return {
+        "people": [{"name": p.name, "role": p.role, "department": p.department} for p in people],
+        "flow": unique_flow,
+        "predictions": predictions
+    }
+
+@router.get('/{document_id}/detail')
+def get_document_detail(document_id: int, db: Session = Depends(get_db)):
+    doc = db.query(Document).filter(Document.id == document_id).first()
+    if not doc:
+        raise HTTPException(status_code=404, detail='Document not found')
+    
+    pages_data = []
+    import fitz
+    import os
+    from ..models import Evidence
+    
+    file_path = os.path.join(UPLOAD_DIR, doc.filename)
+    if os.path.exists(file_path):
+        try:
+            pdf_doc = fitz.open(file_path)
+            from ..models import Person, Event, Meeting, Decision, Prediction
+            for page_num in range(len(pdf_doc)):
+                page = pdf_doc.load_page(page_num)
+                text = page.get_text('text').strip()
+                
+                evidences = db.query(Evidence).filter(Evidence.document_id == document_id, Evidence.page_number == page_num + 1).all()
+                entities = []
+                for ev in evidences:
+                    title = f"Unknown {ev.entity_type}"
+                    if ev.entity_type == 'person':
+                        p = db.query(Person).filter(Person.id == ev.entity_id).first()
+                        if p: title = p.name
+                    elif ev.entity_type == 'event':
+                        e = db.query(Event).filter(Event.id == ev.entity_id).first()
+                        if e: title = e.title
+                    elif ev.entity_type == 'meeting':
+                        m = db.query(Meeting).filter(Meeting.id == ev.entity_id).first()
+                        if m: title = m.title
+                    elif ev.entity_type == 'decision':
+                        d = db.query(Decision).filter(Decision.id == ev.entity_id).first()
+                        if d: title = d.title
+                    elif ev.entity_type == 'prediction':
+                        pr = db.query(Prediction).filter(Prediction.id == ev.entity_id).first()
+                        if pr: title = pr.description
+
+                    entities.append({
+                        'type': ev.entity_type,
+                        'id': ev.entity_id,
+                        'title': title,
+                        'snippet': ev.snippet,
+                        'confidence': ev.confidence
+                    })
+                
+                pages_data.append({
+                    'page_number': page_num + 1,
+                    'text': text,
+                    'extracted_entities': entities
+                })
+        except Exception as e:
+            pass
+            
+    return {
+        'id': doc.id,
+        'filename': doc.filename,
+        'status': doc.status,
+        'created_at': doc.created_at,
+        'pages': pages_data
+    }

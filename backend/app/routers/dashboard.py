@@ -14,7 +14,8 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
     meetings = db.query(Meeting).count()
     decisions = db.query(Decision).count()
     evidence = db.query(Evidence).count()
-    relationships = db.query(Relationship).count()
+    from ..models import Prediction
+    predictions = db.query(Prediction).count()
     
     processed_docs = db.query(Document).filter(Document.status == "processed").count()
     pending_docs = db.query(Document).filter(Document.status.in_(["uploaded", "processing"])).count()
@@ -43,7 +44,8 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
             "meetings": meetings,
             "decisions": decisions,
             "evidence": evidence,
-            "relationships": relationships
+            "relationships": relationships,
+            "predictions": predictions
         },
         "stats": {
             "processed_documents": processed_docs,

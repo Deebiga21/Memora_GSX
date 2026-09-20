@@ -45,6 +45,7 @@ def get_decision_trace(id: int, db: Session = Depends(get_db)):
     for ev in evidences:
         doc = db.query(Document).filter(Document.id == ev.document_id).first()
         trace["evidence"].append({
+            "document_id": doc.id if doc else None,
             "document": doc.filename if doc else "Unknown",
             "page": ev.page_number,
             "snippet": ev.snippet

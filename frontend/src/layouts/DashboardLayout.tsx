@@ -19,6 +19,7 @@ export function DashboardLayout() {
     { name: "Memory", path: "/memory" },
     { name: "Decisions", path: "/decisions" },
     { name: "Timeline", path: "/timeline" },
+    { name: "Foresight", path: "/foresight" },
     { name: "Ask Memory", path: "/ask" },
   ];
 

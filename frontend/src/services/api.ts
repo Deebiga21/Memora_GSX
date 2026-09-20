@@ -17,8 +17,18 @@ export const uploadDocument = async (file: File) => {
   return (await api.post("/documents/upload", formData)).data;
 };
 export const getDocuments = async () => (await api.get("/documents")).data;
+export const getDocument = async (id: number) => (await api.get(`/documents/${id}`)).data;
+export const getDocumentDetail = async (id: number) => (await api.get(`/documents/${id}/detail`)).data;
 export const processDocument = async (id: number) => (await api.post(`/documents/${id}/process`)).data;
-export const deleteDocument = async (id: number) => (await api.delete(`/documents/${id}`)).data;
+export const deleteDocument = async (id: number) => {
+  const res = await api.delete(`/documents/${id}`);
+  return res.data;
+};
+
+export const getExtractedFlow = async (id: number) => {
+  const res = await api.get(`/documents/${id}/extracted_flow`);
+  return res.data;
+};
 
 // Memory
 export const getPeople = async () => (await api.get("/people")).data;
@@ -30,8 +40,11 @@ export const getGlobalGraph = async () => (await api.get("/graph")).data;
 export const getDecisions = async () => (await api.get("/decisions")).data;
 export const getDecisionTrace = async (id: number) => (await api.get(`/decisions/${id}/trace`)).data;
 
+// Foresight
+export const getForesight = async () => (await api.get("/foresight")).data;
+
 // Ask
-export const askMemory = async (question: string) => (await api.post("/ask", { question })).data;
+export const askMemory = async (question: string, history: any[] = []) => (await api.post("/ask", { question, history })).data;
 export const getEvidence = async (id: number) => (await api.get(`/evidence/${id}`)).data;
 export const searchMemory = async (q: string) => {
   const data = (await api.get(`/search?q=${q}`)).data;

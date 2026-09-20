@@ -3,6 +3,7 @@ import { DashboardLayout } from "./layouts/DashboardLayout";
 import LandingPage from "./pages/LandingPage";
 import Dashboard from "./pages/Dashboard";
 import DocumentIntelligence from "./pages/DocumentIntelligence";
+import DocumentDetail from "./pages/DocumentDetail";
 import InstitutionalMemory from "./pages/InstitutionalMemory";
 import Decisions from "./pages/Decisions";
 import DecisionDNA from "./pages/DecisionDNA";
@@ -11,6 +12,7 @@ import AskMemory from "./pages/AskMemory";
 import EvidenceViewer from "./pages/EvidenceViewer";
 import Settings from "./pages/Settings";
 import Profile from "./pages/Profile";
+import Foresight from "./pages/Foresight";
 
 function App() {
   return (
@@ -21,10 +23,12 @@ function App() {
         <Route element={<DashboardLayout />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/documents" element={<DocumentIntelligence />} />
+          <Route path="/documents/:id" element={<DocumentDetail />} />
           <Route path="/memory" element={<InstitutionalMemory />} />
           <Route path="/decisions" element={<Decisions />} />
           <Route path="/decisions/:id/trace" element={<DecisionDNA />} />
           <Route path="/timeline" element={<DecisionTimeline />} />
+          <Route path="/foresight" element={<Foresight />} />
           <Route path="/ask" element={<AskMemory />} />
           <Route path="/evidence" element={<Navigate to="/evidence/1" replace />} />
           <Route path="/evidence/:id" element={<EvidenceViewer />} />

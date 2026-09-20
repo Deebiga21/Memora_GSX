@@ -88,14 +88,30 @@ export default function Decisions() {
                        </div>
                      </div>
                      
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pl-11">
+                     <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pl-11">
                        <div>
-                         <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><Zap size={10}/> Action Taken</div>
-                         <div className="text-sm text-slate-800 font-medium">{decision.action || "-"}</div>
+                         <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Reason (Why)</div>
+                         <div className="text-sm text-slate-800 font-medium bg-slate-50/50 p-2 rounded border border-slate-100">{decision.reason || "Not specified"}</div>
                        </div>
                        <div>
-                         <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Reason</div>
-                         <div className="text-sm text-slate-800 font-medium">{decision.reason || "-"}</div>
+                         <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1 flex items-center gap-1"><Zap size={10}/> Action (What)</div>
+                         <div className="text-sm text-slate-800 font-medium bg-blue-50/50 p-2 rounded border border-blue-50 text-blue-900">{decision.action || "Not specified"}</div>
+                       </div>
+                       <div>
+                         <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Expected Impact</div>
+                         <div className="text-sm text-slate-800 font-medium bg-purple-50/50 p-2 rounded border border-purple-50 text-purple-900">{decision.impact || "Not mapped"}</div>
+                       </div>
+                       <div>
+                         <div className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Execution Status</div>
+                         <div className="text-sm font-bold uppercase tracking-wider mt-1">
+                           <span className={`px-2.5 py-1 rounded-sm text-[10px] ${
+                             decision.status?.toLowerCase() === 'implemented' ? 'bg-emerald-100 text-emerald-800' :
+                             decision.status?.toLowerCase() === 'rejected' ? 'bg-red-100 text-red-800' :
+                             'bg-slate-100 text-slate-800'
+                           }`}>
+                             {decision.status || "UNKNOWN"}
+                           </span>
+                         </div>
                        </div>
                      </div>
                   </div>

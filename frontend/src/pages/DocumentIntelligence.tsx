@@ -1,6 +1,7 @@
-import { FileText, Upload, Trash2, CheckCircle2, AlertCircle, Loader2, Eye, BrainCircuit } from "lucide-react";
+import { FileText, Upload, Trash2, CheckCircle2, AlertCircle, Loader2, Eye, BrainCircuit, X, Users, Calendar, Network, Video } from "lucide-react";
 import { useState, useEffect } from "react";
-import { getDocuments, uploadDocument, processDocument, deleteDocument } from "../services/api";
+import { Link } from "react-router-dom";
+import { getDocuments, uploadDocument, processDocument, deleteDocument, getExtractedFlow } from "../services/api";
 
 export default function DocumentIntelligence() {
   const [documents, setDocuments] = useState<any[]>([]);
@@ -8,6 +9,7 @@ export default function DocumentIntelligence() {
   const [uploading, setUploading] = useState(false);
   const [processingId, setProcessingId] = useState<number | null>(null);
   const [processStep, setProcessStep] = useState(0);
+  const [extractedFlow, setExtractedFlow] = useState<any>(null);
 
   const steps = [
     "Uploading...",
@@ -67,9 +69,14 @@ export default function DocumentIntelligence() {
     try {
       await processDocument(id);
       fetchDocs();
+      setTimeout(async () => {
+         const flow = await getExtractedFlow(id);
+         setExtractedFlow(flow);
+         setProcessingId(null);
+         setProcessStep(0);
+      }, steps.length * 1200 + 1000);
     } catch (err) {
       console.error("Processing failed", err);
-    } finally {
       setTimeout(() => {
         setProcessingId(null);
         setProcessStep(0);
@@ -195,9 +202,9 @@ export default function DocumentIntelligence() {
                       </td>
                       <td className="px-6 py-4">
                          <div className="flex items-center gap-2">
-                           <a href={`http://localhost:8000/documents/${doc.id}/file`} target="_blank" rel="noopener noreferrer" className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="View Document">
+                           <Link to={`/documents/${doc.id}`} className="p-1.5 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors" title="View Document Detail">
                              <Eye size={16} />
-                           </a>
+                           </Link>
                            <button onClick={() => handleDelete(doc.id)} className="p-1.5 text-slate-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors" title="Delete">
                              <Trash2 size={16} />
                            </button>
@@ -211,6 +218,103 @@ export default function DocumentIntelligence() {
           )}
         </div>
       </div>
+
+      {/* Extraction Flow Modal */}
+      {extractedFlow && (
+        <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-xl max-w-3xl w-full max-h-[85vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200">
+             
+             <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-slate-50">
+                <div>
+                   <h2 className="text-xl font-bold text-[#0a192f]">Extraction Results Flow</h2>
+                   <p className="text-xs font-medium text-slate-500 mt-0.5">Entities identified and permanently mapped to memory.</p>
+                </div>
+                <button onClick={() => setExtractedFlow(null)} className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-200 rounded-full transition-colors">
+                   <X size={20} />
+                </button>
+             </div>
+
+             <div className="flex-1 overflow-y-auto p-8 space-y-10">
+                
+                {/* People Found */}
+                {extractedFlow.people && extractedFlow.people.length > 0 && (
+                   <div>
+                     <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2"><Users size={16} className="text-blue-600"/> People Identified</h3>
+                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {extractedFlow.people.map((p: any, i: number) => (
+                           <div key={i} className="bg-slate-50 border border-slate-100 rounded-lg p-3">
+                              <div className="font-bold text-sm text-slate-900 truncate">{p.name}</div>
+                              {p.role && <div className="text-xs text-slate-500 truncate">{p.role}</div>}
+                           </div>
+                        ))}
+                     </div>
+                   </div>
+                )}
+
+                {/* Timeline Flow */}
+                {extractedFlow.flow && extractedFlow.flow.length > 0 && (
+                   <div>
+                     <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-6 flex items-center gap-2"><Network size={16} className="text-purple-600"/> Reconstructed Sequence</h3>
+                     <div className="space-y-6 relative before:absolute before:inset-0 before:ml-5 before:-translate-x-px md:before:mx-auto md:before:translate-x-0 before:h-full before:w-0.5 before:bg-gradient-to-b before:from-transparent before:via-slate-200 before:to-transparent">
+                        {extractedFlow.flow.map((item: any, i: number) => (
+                           <div key={i} className="relative flex items-center justify-between md:justify-normal md:odd:flex-row-reverse group is-active">
+                              <div className="flex items-center justify-center w-10 h-10 rounded-full border-4 border-white bg-blue-100 text-blue-600 shrink-0 md:order-1 md:group-odd:-translate-x-1/2 md:group-even:translate-x-1/2 shadow-sm z-10">
+                                 {item.type === 'Decision' ? <Network size={16} /> : item.type === 'Meeting' ? <Video size={16} /> : <Calendar size={16} />}
+                              </div>
+                              <div className="w-[calc(100%-4rem)] md:w-[calc(50%-2.5rem)] p-4 rounded-xl border border-slate-100 bg-white shadow-sm hover:shadow-md transition-shadow">
+                                 <div className="flex items-center justify-between mb-1">
+                                    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">{item.type}</span>
+                                    {item.date && <span className="text-xs font-bold text-slate-500">{new Date(item.date).toLocaleDateString()}</span>}
+                                 </div>
+                                 <h4 className="font-bold text-sm text-slate-900 mb-1">{item.title}</h4>
+                                 <p className="text-xs text-slate-600 line-clamp-2">{item.description}</p>
+                                 {item.action && (
+                                   <div className="mt-2 pt-2 border-t border-slate-50 text-[11px] font-medium text-blue-700 bg-blue-50/50 -mx-4 -mb-4 px-4 py-2 rounded-b-xl">
+                                      <span className="font-bold">Action:</span> {item.action}
+                                   </div>
+                                 )}
+                              </div>
+                           </div>
+                        ))}
+                     </div>
+                   </div>
+                )}
+                
+                {/* Predictions/Foresight */}
+                {extractedFlow.predictions && extractedFlow.predictions.length > 0 && (
+                   <div>
+                     <h3 className="text-sm font-bold text-slate-800 uppercase tracking-wider mb-4 flex items-center gap-2"><BrainCircuit size={16} className="text-indigo-600"/> Foresight & Predictions</h3>
+                     <div className="space-y-3">
+                        {extractedFlow.predictions.map((p: any, i: number) => (
+                           <div key={i} className="bg-indigo-50/50 border border-indigo-100 rounded-lg p-4">
+                              <div className="flex justify-between items-start mb-2">
+                                 <div className="font-bold text-sm text-slate-900">{p.description}</div>
+                                 <span className="px-2 py-0.5 bg-indigo-100 text-indigo-700 font-bold rounded text-[10px] uppercase">{p.type.replace(/_/g, ' ')}</span>
+                              </div>
+                              <div className="text-xs text-slate-600"><span className="font-bold">Basis:</span> {p.basis}</div>
+                              {p.expected_date && <div className="text-xs text-slate-500 mt-2 font-semibold">Expected: {new Date(p.expected_date).toLocaleDateString()}</div>}
+                           </div>
+                        ))}
+                     </div>
+                   </div>
+                )}
+                
+                {extractedFlow.people?.length === 0 && extractedFlow.flow?.length === 0 && (
+                   <div className="text-center py-12 text-slate-500">
+                     No highly confident sequential memory entities were extracted from this document.
+                   </div>
+                )}
+             </div>
+
+             <div className="p-4 border-t border-slate-100 bg-slate-50 text-right">
+                <button onClick={() => setExtractedFlow(null)} className="px-6 py-2 bg-[#0a192f] text-white rounded-lg text-sm font-bold shadow-sm hover:bg-slate-800 transition-colors">
+                   Done
+                </button>
+             </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }

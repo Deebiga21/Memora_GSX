@@ -74,7 +74,9 @@ export default function AskMemory() {
     setIsSpeaking(false);
     
     try {
-      const res = await askMemory(currentQuery);
+      // Map messages to history expected by backend
+      const history = messages.map(m => ({ role: m.role, content: m.role === 'user' ? m.content : m.answer }));
+      const res = await askMemory(currentQuery, history);
       if (res.answer === "I could not find sufficient evidence in the available institutional records.") {
         setMessages(prev => [...prev, { role: "ai", error: res.answer }]);
         if (shouldSpeakResponse) toggleSpeak(res.answer);
@@ -171,7 +173,7 @@ export default function AskMemory() {
                               <h3 className="text-xs font-bold text-[#A18A68] flex items-center gap-1.5"><FileText size={12} /> Supporting Evidence Sources</h3>
                               <div className="flex gap-2 overflow-x-auto pb-2">
                                 {msg.evidence.map((ev: any, i: number) => (
-                                  <div key={i} className="min-w-[280px] bg-[#2C2A28] border border-[#5A544A] rounded-xl p-4 shadow-md shrink-0">
+                                  <Link to={`/documents/${ev.document_id}`} key={i} className="min-w-[280px] bg-[#2C2A28] border border-[#5A544A] rounded-xl p-4 shadow-md shrink-0 hover:bg-[#38342B] transition-colors block">
                                      <div className="text-[9px] font-black text-[#A18A68] uppercase tracking-widest mb-1.5">
                                         Source {i + 1} • Page {ev.page}
                                      </div>
@@ -179,7 +181,7 @@ export default function AskMemory() {
                                      <div className="text-[10px] text-[#D0BF9F] italic line-clamp-3 leading-relaxed">
                                         "{ev.snippet}"
                                      </div>
-                                  </div>
+                                  </Link>
                                 ))}
                               </div>
                             </div>

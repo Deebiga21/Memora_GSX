@@ -91,6 +91,18 @@ class Evidence(Base):
     confidence = Column(Float, default=1.0)
     created_at = Column(DateTime, default=get_utc_now)
 
+class Prediction(Base):
+    __tablename__ = "predictions"
+    id = Column(Integer, primary_key=True, index=True)
+    prediction_type = Column(String, index=True) # UPCOMING_DEADLINE, PLANNED_MEETING, EXPECTED_ACTION, etc.
+    description = Column(Text)
+    expected_date = Column(DateTime, nullable=True)
+    basis = Column(Text, nullable=True)
+    status = Column(String, default="pending")
+    confidence = Column(Float, default=1.0)
+    created_at = Column(DateTime, default=get_utc_now)
+    updated_at = Column(DateTime, default=get_utc_now, onupdate=get_utc_now)
+
 class Relationship(Base):
     __tablename__ = "relationships"
     id = Column(Integer, primary_key=True, index=True)

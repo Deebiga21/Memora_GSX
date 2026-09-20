@@ -8,4 +8,4 @@ router = APIRouter()
 
 @router.post("", response_model=AskResponse)
 def ask_memory(request: AskRequest, db: Session = Depends(get_db)):
-    return answer_memory_question(db, request.question)
+    return answer_memory_question(db, request.question, request.history)
