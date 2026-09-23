@@ -133,25 +133,25 @@ USER MESSAGE:
     empty_resp = {"answer": "I could not find sufficient evidence in the available institutional records.", "decision": "", "evidence": [], "confidence": 0.0, "related_decisions": [], "related_events": [], "related_people": []}
     
     try:
-        if gemini_key:
-            genai.configure(api_key=gemini_key)
-            model_name = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
-            model = genai.GenerativeModel(model_name)
-            response = model.generate_content(prompt)
-            content = response.text
-        elif nvidia_key:
+        if nvidia_key:
             from openai import OpenAI
             client = OpenAI(
               base_url = "https://integrate.api.nvidia.com/v1",
               api_key = nvidia_key
             )
             completion = client.chat.completions.create(
-              model="meta/llama3-8b-instruct",
+              model="deepseek-ai/deepseek-v4.1-flash",
               messages=[{"role":"user","content":prompt}],
               temperature=0.2,
               max_tokens=2048,
             )
             content = completion.choices[0].message.content
+        elif gemini_key:
+            genai.configure(api_key=gemini_key)
+            model_name = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+            model = genai.GenerativeModel(model_name)
+            response = model.generate_content(prompt)
+            content = response.text
         else:
             return empty_resp
             
