@@ -16,7 +16,7 @@ class Document(Base):
     file_type = Column(String)
     file_size = Column(Integer)
     page_count = Column(Integer, default=0)
-    status = Column(String, default="uploaded") # uploaded, processing, processed, failed, needs_review
+    status = Column(String, default="uploaded") # uploaded, processing, processed, failed
     upload_date = Column(DateTime, default=get_utc_now)
     processed_at = Column(DateTime, nullable=True)
     error_message = Column(Text, nullable=True)
@@ -91,17 +91,44 @@ class Evidence(Base):
     confidence = Column(Float, default=1.0)
     created_at = Column(DateTime, default=get_utc_now)
 
-class Prediction(Base):
-    __tablename__ = "predictions"
+class Forecast(Base):
+    __tablename__ = "forecasts"
     id = Column(Integer, primary_key=True, index=True)
-    prediction_type = Column(String, index=True) # UPCOMING_DEADLINE, PLANNED_MEETING, EXPECTED_ACTION, etc.
+    title = Column(String, index=True)
     description = Column(Text)
-    expected_date = Column(DateTime, nullable=True)
-    basis = Column(Text, nullable=True)
-    status = Column(String, default="pending")
     confidence = Column(Float, default=1.0)
+    reason = Column(Text, nullable=True)
     created_at = Column(DateTime, default=get_utc_now)
     updated_at = Column(DateTime, default=get_utc_now, onupdate=get_utc_now)
+
+class ForecastEvidence(Base):
+    __tablename__ = "forecast_evidence"
+    id = Column(Integer, primary_key=True, index=True)
+    forecast_id = Column(Integer, ForeignKey("forecasts.id", ondelete="CASCADE"))
+    document_id = Column(Integer, ForeignKey("documents.id", ondelete="CASCADE"), nullable=True)
+    page_number = Column(Integer, nullable=True)
+    evidence_id = Column(Integer, ForeignKey("evidence.id", ondelete="SET NULL"), nullable=True)
+
+class ActivityLog(Base):
+    __tablename__ = "activity_logs"
+    id = Column(Integer, primary_key=True, index=True)
+    activity_type = Column(String, index=True)
+    message = Column(Text)
+    document_id = Column(Integer, ForeignKey("documents.id", ondelete="SET NULL"), nullable=True)
+    created_at = Column(DateTime, default=get_utc_now)
+
+class ChatSession(Base):
+    __tablename__ = "chat_sessions"
+    id = Column(Integer, primary_key=True, index=True)
+    created_at = Column(DateTime, default=get_utc_now)
+
+class ChatMessage(Base):
+    __tablename__ = "chat_messages"
+    id = Column(Integer, primary_key=True, index=True)
+    session_id = Column(Integer, ForeignKey("chat_sessions.id", ondelete="CASCADE"))
+    role = Column(String, index=True) # user, assistant
+    message = Column(Text)
+    created_at = Column(DateTime, default=get_utc_now)
 
 class Project(Base):
     __tablename__ = "projects"

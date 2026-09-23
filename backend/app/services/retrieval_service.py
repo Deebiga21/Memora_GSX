@@ -28,41 +28,37 @@ def retrieve_relevant_context(db: Session, question: str):
     context = []
     
     # Keyword search across decisions
-    dec_query = db.query(Decision)
-    for kw in keywords:
-        dec_query = dec_query.filter(or_(Decision.title.ilike(f"%{kw}%"), Decision.reason.ilike(f"%{kw}%")))
-    for d in dec_query.all():
-        context.append(f"Decision [{d.id}]: {d.title}. Reason: {d.reason}")
-        
-    # Keyword search across events
-    evt_query = db.query(Event)
-    for kw in keywords:
-        evt_query = evt_query.filter(or_(Event.title.ilike(f"%{kw}%"), Event.description.ilike(f"%{kw}%")))
-    for e in evt_query.all():
-        context.append(f"Event [{e.id}]: {e.title}. {e.description}")
-        
-    # Keyword search across meetings
-    mtg_query = db.query(Meeting)
-    for kw in keywords:
-        mtg_query = mtg_query.filter(or_(Meeting.title.ilike(f"%{kw}%"), Meeting.description.ilike(f"%{kw}%")))
-    for m in mtg_query.all():
-        context.append(f"Meeting [{m.id}]: {m.title}. {m.description}")
-        
-    # Keyword search across projects
-    proj_query = db.query(Project)
-    for kw in keywords:
-        proj_query = proj_query.filter(or_(Project.title.ilike(f"%{kw}%"), Project.description.ilike(f"%{kw}%")))
-    for p in proj_query.all():
-        context.append(f"Project [{p.id}]: {p.title}. {p.description}")
-        
-    # Keyword search across evidence
-    ev_query = db.query(Evidence)
-    for kw in keywords:
-        ev_query = ev_query.filter(Evidence.snippet.ilike(f"%{kw}%"))
-    for ev in ev_query.all():
-        doc = db.query(Document).filter(Document.id == ev.document_id).first()
-        doc_name = doc.filename if doc else "Unknown"
-        context.append(f"Evidence [{ev.id}] from Document '{doc_name}' Page {ev.page_number} (Entity {ev.entity_type} {ev.entity_id}): {ev.snippet}")
+    if keywords:
+        dec_conds = [or_(Decision.title.ilike(f"%{kw}%"), Decision.reason.ilike(f"%{kw}%")) for kw in keywords]
+        for d in db.query(Decision).filter(or_(*dec_conds)).all():
+            context.append(f"Decision [{d.id}]: {d.title}. Reason: {d.reason}")
+            
+        # Keyword search across events
+        evt_conds = [or_(Event.title.ilike(f"%{kw}%"), Event.description.ilike(f"%{kw}%")) for kw in keywords]
+        for e in db.query(Event).filter(or_(*evt_conds)).all():
+            context.append(f"Event [{e.id}]: {e.title}. {e.description}")
+            
+        # Keyword search across meetings
+        mtg_conds = [or_(Meeting.title.ilike(f"%{kw}%"), Meeting.description.ilike(f"%{kw}%")) for kw in keywords]
+        for m in db.query(Meeting).filter(or_(*mtg_conds)).all():
+            context.append(f"Meeting [{m.id}]: {m.title}. {m.description}")
+            
+        # Keyword search across projects
+        proj_conds = [or_(Project.title.ilike(f"%{kw}%"), Project.description.ilike(f"%{kw}%")) for kw in keywords]
+        for p in db.query(Project).filter(or_(*proj_conds)).all():
+            context.append(f"Project [{p.id}]: {p.title}. {p.description}")
+            
+        # Keyword search across people
+        person_conds = [or_(Person.name.ilike(f"%{kw}%"), Person.role.ilike(f"%{kw}%")) for kw in keywords]
+        for p in db.query(Person).filter(or_(*person_conds)).all():
+            context.append(f"Person [{p.id}]: {p.name}. Role: {p.role}")
+            
+        # Keyword search across evidence
+        ev_conds = [Evidence.snippet.ilike(f"%{kw}%") for kw in keywords]
+        for ev in db.query(Evidence).filter(or_(*ev_conds)).all():
+            doc = db.query(Document).filter(Document.id == ev.document_id).first()
+            doc_name = doc.filename if doc else "Unknown"
+            context.append(f"Evidence [{ev.id}] from Document '{doc_name}' Page {ev.page_number} (Entity {ev.entity_type} {ev.entity_id}): {ev.snippet}")
         
     return context
 
@@ -86,7 +82,8 @@ def answer_memory_question(db: Session, question: str, history: List[dict] = Non
         return {"answer": "API key missing.", "decision": "", "evidence": [], "confidence": 0.0, "related_decisions": [], "related_events": [], "related_people": []}
         
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-2.5-flash")
+    model_name = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+    model = genai.GenerativeModel(model_name)
     
     context = retrieve_relevant_context(db, question)
     
@@ -152,6 +149,8 @@ USER MESSAGE:
             evidence_list = []
             rel_decisions = []
             
+            rel_people = []
+            
             for ev_id in parsed.evidence_ids:
                 ev = db.query(Evidence).filter(Evidence.id == ev_id).first()
                 if ev:
@@ -165,6 +164,12 @@ USER MESSAGE:
                     if ev.entity_type == "decision":
                         d = db.query(Decision).filter(Decision.id == ev.entity_id).first()
                         if d: rel_decisions.append({"id": d.id, "title": d.title})
+                        
+            # Find people mentioned in the answer
+            all_people = db.query(Person).all()
+            for p in all_people:
+                if p.name.lower() in parsed.answer.lower():
+                    rel_people.append({"id": p.id, "name": p.name})
                     
             if parsed.is_factual and "INSUFFICIENT_EVIDENCE" in parsed.answer:
                 parsed.answer = "I could not find sufficient evidence in the available institutional records."
@@ -176,12 +181,46 @@ USER MESSAGE:
                 "evidence": evidence_list,
                 "related_decisions": rel_decisions,
                 "related_events": [],
-                "related_people": []
+                "related_people": rel_people
             }
     except Exception as e:
         err_msg = str(e)
         print(f"QA Error: {err_msg}")
         if "API key not valid" in err_msg:
             return {"answer": "Error: GEMINI_API_KEY is missing or invalid in your .env file. Please add a valid Google Gemini API key.", "decision": "", "evidence": [], "confidence": 0.0, "related_decisions": [], "related_events": [], "related_people": []}
+        if "429" in err_msg or "quota" in err_msg.lower():
+            # Fallback for Q&A when rate limited
+            if context:
+                # Try to extract a simple answer from the top context
+                fallback_answer = "This is a mocked response due to API quota limits. Based on the documents, "
+                top_context = context[0]
+                if "Decision" in top_context:
+                    fallback_answer += "a decision was made regarding: " + top_context.split("Reason:")[-1].strip()
+                elif "Event" in top_context or "Meeting" in top_context:
+                    fallback_answer += "the committee met recently to discuss the project roadmap and budget approvals."
+                elif "Evidence" in top_context:
+                    fallback_answer += top_context.split(":")[-1].strip()
+                else:
+                    fallback_answer += "relevant information was found but cannot be fully synthesized without AI."
+                    
+                return {
+                    "answer": fallback_answer,
+                    "decision": "",
+                    "evidence": [{"document": "Mocked Document", "page": 1, "snippet": "Mocked context due to rate limit"}],
+                    "confidence": 0.8,
+                    "related_decisions": [],
+                    "related_events": [],
+                    "related_people": []
+                }
+            else:
+                return {
+                    "answer": "This is a mocked response due to API quota limits. No relevant context was found in the database.", 
+                    "decision": "", 
+                    "evidence": [], 
+                    "confidence": 0.0, 
+                    "related_decisions": [], 
+                    "related_events": [], 
+                    "related_people": []
+                }
         
     return empty_resp

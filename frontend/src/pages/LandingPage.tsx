@@ -1,12 +1,32 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { BrainCircuit, FileText, Calendar, Users, Network, Search, ArrowRight, Zap, Globe } from "lucide-react";
 import { motion, useScroll } from "framer-motion";
 import { useState, useEffect } from "react";
 import LiquidGlassCluster from "../components/LiquidGlassCluster";
 import ParticleDrift from "../components/ParticleDrift";
+import { updateProfile, getProfile } from "../services/api";
 
 export default function LandingPage() {
   const { scrollYProgress } = useScroll();
+  const navigate = useNavigate();
+  const [username, setUsername] = useState("");
+
+  useEffect(() => {
+    getProfile().then(p => {
+      if (p && p.name) setUsername(p.name);
+    }).catch(console.error);
+  }, []);
+
+  const handleStart = async () => {
+    if (username.trim()) {
+      try {
+        await updateProfile({ name: username });
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    navigate("/dashboard");
+  };
   
   return (
     <div className="min-h-screen bg-[#0a0a0a] text-white font-sans selection:bg-white/20 relative">
@@ -40,6 +60,7 @@ export default function LandingPage() {
           muted 
           playsInline
           className="absolute inset-0 w-full h-full object-cover z-0"
+          style={{ filter: 'contrast(1.2) brightness(1.1) saturate(1.2) blur(0px)' }}
         >
           <source src="/bg-video.mp4" type="video/mp4" />
         </video>
@@ -59,27 +80,19 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="w-full max-w-md relative mb-6 shadow-2xl"
+            className="w-full max-w-md relative mb-16 shadow-2xl"
           >
             <input 
-              type="email" 
-              placeholder="Enter your email" 
-              className="w-full bg-black/40 border border-white/20 rounded-full py-4 pl-6 pr-14 text-white placeholder-gray-400 focus:outline-none focus:border-white/50 backdrop-blur-xl shadow-inner"
+              type="text" 
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your username" 
+              className="w-full bg-black/40 border border-white/20 rounded-full py-4 pl-6 pr-40 text-white placeholder-gray-400 focus:outline-none focus:border-white/50 backdrop-blur-xl shadow-inner"
             />
-            <button className="absolute right-2 top-1/2 -translate-y-1/2 w-10 h-10 bg-white rounded-full flex items-center justify-center text-black hover:bg-gray-200 transition-colors shadow-md">
-              <ArrowRight size={20} strokeWidth={2.5} />
+            <button onClick={handleStart} className="absolute right-2 top-1/2 -translate-y-1/2 px-5 py-2 bg-white rounded-full flex items-center justify-center text-black hover:bg-gray-200 transition-colors shadow-md text-sm font-bold">
+              Get Started <ArrowRight size={16} className="ml-1" strokeWidth={2.5} />
             </button>
           </motion.div>
-
-          <motion.p 
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.3 }}
-            className="text-sm text-gray-200 font-medium max-w-md mx-auto mb-16 leading-relaxed drop-shadow-[0_4px_8px_rgba(0,0,0,0.8)]"
-          >
-            Stay updated with the latest news and insights. Subscribe to our newsletter today and never miss out on exciting updates.
-          </motion.p>
-          
         </div>
         
         {/* Bottom Button */}

@@ -7,24 +7,12 @@ export default function EvidenceViewer() {
   const { id } = useParams();
   const [evidence, setEvidence] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    // For MVP, we simulate fetching evidence if ID is missing or fails
     getEvidence(Number(id) || 1)
       .then(setEvidence)
-      .catch(() => {
-        // Fallback mock data for the MVP workflow demonstration
-        setEvidence({
-          id: 1,
-          document: "Committee_Meeting.pdf",
-          page: 3,
-          extract: "Due to the hardware testing delay, the project committee has agreed that the original testing schedule could not be completed. The project deadline is hereby extended to September 20th.",
-          confidence: 94,
-          related_decision: "Project Deadline Extended",
-          related_event: "Hardware Testing Delay",
-          related_meeting: "Project Committee Meeting"
-        });
-      })
+      .catch(() => setError(true))
       .finally(() => setLoading(false));
   }, [id]);
 
@@ -32,6 +20,16 @@ export default function EvidenceViewer() {
     return (
       <div className="h-full flex items-center justify-center">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#A18A68]"></div>
+      </div>
+    );
+  }
+
+  if (error || !evidence) {
+    return (
+      <div className="h-full flex flex-col items-center justify-center text-[#A18A68]">
+         <p className="text-xl font-serif mb-2 text-[#F4EFE6]">Evidence Not Found</p>
+         <p className="text-sm">We couldn't load the requested trace data or it doesn't exist.</p>
+         <Link to={-1 as any} className="mt-4 px-4 py-2 bg-[#2C2A28] border border-[#5A544A] text-[#F4EFE6] rounded-md hover:bg-[#34322F]">Go Back</Link>
       </div>
     );
   }
@@ -77,34 +75,23 @@ export default function EvidenceViewer() {
             </div>
             
             <div className="flex-1 overflow-auto p-8 flex justify-center items-start">
-               {/* Mock PDF Page */}
                <div className="w-full max-w-2xl bg-[#2C2A28] shadow-xl min-h-[800px] p-12 relative border border-[#5A544A]">
                   
-                  {/* Document Header */}
                   <div className="border-b-2 border-[#83633F] pb-4 mb-8 text-center">
-                     <h2 className="text-2xl font-serif font-bold text-[#F4EFE6] uppercase tracking-widest">Project Committee</h2>
-                     <p className="text-sm font-serif text-[#8C7A5E] mt-1">Meeting Minutes - August 12, 2026</p>
+                     <h2 className="text-2xl font-serif font-bold text-[#F4EFE6] uppercase tracking-widest">Document Evidence</h2>
+                     <p className="text-sm font-serif text-[#8C7A5E] mt-1">Page {evidence.page_number}</p>
                   </div>
 
-                  {/* Document Content */}
                   <div className="space-y-6 font-serif text-[#F4EFE6] leading-relaxed text-justify">
-                     <p>The meeting was called to order at 10:00 AM. Attendance included Arun Kumar (Project Lead), Priya (Operations), and Ravi (Hardware Engineering).</p>
-                     <p>Ravi provided an update on the current status of the Phase 2 hardware integration. It was noted that vendor shipments for critical components were delayed by 14 days, creating a cascading effect on the QA timeline.</p>
-                     
-                     {/* Highlighted Evidence */}
                      <div className="bg-[#DFCEB6]/30 border-l-4 border-[#83633F] p-2 -mx-3 my-4 rounded-r relative group cursor-pointer">
                         <div className="absolute -left-12 top-1 w-8 h-8 bg-[#34322F] text-[#F4EFE6] rounded-full flex items-center justify-center shadow-lg opacity-0 group-hover:opacity-100 transition-opacity">
                            <Network size={14}/>
                         </div>
                         <p className="font-medium text-[#F4EFE6]">
-                           Due to the hardware testing delay, the project committee has agreed that the original testing schedule could not be completed. The project deadline is hereby extended to September 20th.
+                           {evidence.snippet}
                         </p>
                      </div>
-
-                     <p>Priya noted that this extension will require updating the client communication strategy. Arun will draft the revised timeline and share it with the external stakeholders by EOD.</p>
-                     <p>Meeting adjourned at 11:30 AM.</p>
                   </div>
-
                </div>
             </div>
          </div>
@@ -122,7 +109,7 @@ export default function EvidenceViewer() {
                      <Search size={12}/> Exact Match
                   </div>
                   <div className="bg-[#34322F] p-4 rounded-lg border border-[#5A544A] text-sm font-medium text-[#F4EFE6] leading-relaxed">
-                     "{evidence.extract}"
+                     "{evidence.snippet}"
                   </div>
                </div>
 
@@ -130,12 +117,12 @@ export default function EvidenceViewer() {
                   <div>
                      <div className="text-[10px] font-black text-[#8C7A5E] uppercase tracking-widest mb-1">Confidence</div>
                      <span className="px-2.5 py-1 bg-[#201D19] text-[#A18A68] font-bold rounded-md text-sm border border-[#5A544A]">
-                        {evidence.confidence}%
+                        {(evidence.confidence * 100).toFixed(0)}%
                      </span>
                   </div>
                   <div>
                      <div className="text-[10px] font-black text-[#8C7A5E] uppercase tracking-widest mb-1">Page</div>
-                     <div className="text-sm font-bold text-[#F4EFE6]">{evidence.page}</div>
+                     <div className="text-sm font-bold text-[#F4EFE6]">{evidence.page_number}</div>
                   </div>
                </div>
 
@@ -146,29 +133,9 @@ export default function EvidenceViewer() {
                      <div className="flex gap-3 p-3 bg-[#34322F] rounded-lg border border-[#3D3A35]">
                         <Network size={16} className="text-[#A18A68] shrink-0 mt-0.5" />
                         <div>
-                           <div className="text-[10px] font-bold text-[#A18A68] uppercase tracking-wider mb-0.5">Supports Decision</div>
-                           <Link to="/decisions/1/trace" className="text-sm font-bold text-[#F4EFE6] hover:text-[#A18A68] transition-colors">
-                              {evidence.related_decision}
-                           </Link>
-                        </div>
-                     </div>
-
-                     <div className="flex gap-3 p-3 bg-[#34322F] rounded-lg border border-[#3D3A35]">
-                        <Calendar size={16} className="text-[#A18A68] shrink-0 mt-0.5" />
-                        <div>
-                           <div className="text-[10px] font-bold text-[#A18A68] uppercase tracking-wider mb-0.5">Detected Event</div>
-                           <div className="text-sm font-semibold text-[#F4EFE6]">
-                              {evidence.related_event}
-                           </div>
-                        </div>
-                     </div>
-
-                     <div className="flex gap-3 p-3 bg-[#34322F] rounded-lg border border-[#3D3A35]">
-                        <Video size={16} className="text-[#A18A68] shrink-0 mt-0.5" />
-                        <div>
-                           <div className="text-[10px] font-bold text-[#A18A68] uppercase tracking-wider mb-0.5">Context Meeting</div>
-                           <div className="text-sm font-semibold text-[#F4EFE6]">
-                              {evidence.related_meeting}
+                           <div className="text-[10px] font-bold text-[#A18A68] uppercase tracking-wider mb-0.5">Entity Type</div>
+                           <div className="text-sm font-bold text-[#F4EFE6]">
+                              {evidence.entity_type}
                            </div>
                         </div>
                      </div>

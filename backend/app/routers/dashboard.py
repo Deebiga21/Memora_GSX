@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from ..database import get_db
-from ..models import Person, Event, Meeting, Decision, Document, Evidence, Relationship, Project, Prediction
+from ..models import Person, Event, Meeting, Decision, Document, Evidence, Relationship, Project, Forecast, ActivityLog
 from datetime import datetime
 
 router = APIRouter()
@@ -16,7 +16,9 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
     projects = db.query(Project).count()
     evidence = db.query(Evidence).count()
     relationships = db.query(Relationship).count()
-    predictions = db.query(Prediction).count()
+    forecasts = db.query(Forecast).count()
+    
+    memory_nodes = docs + people + events + meetings + decisions + evidence
     
     processed_docs = db.query(Document).filter(Document.status == "processed").count()
     pending_docs = db.query(Document).filter(Document.status.in_(["uploaded", "processing"])).count()
@@ -47,7 +49,8 @@ def get_dashboard_stats(db: Session = Depends(get_db)):
             "projects": projects,
             "evidence": evidence,
             "relationships": relationships,
-            "predictions": predictions
+            "forecasts": forecasts,
+            "memory_nodes": memory_nodes
         },
         "stats": {
             "processed_documents": processed_docs,
@@ -79,3 +82,8 @@ def get_timeline(db: Session = Depends(get_db)):
         
     timeline.sort(key=lambda x: x["date"])
     return timeline
+
+@router.get("/recent")
+def get_recent_activity(db: Session = Depends(get_db)):
+    logs = db.query(ActivityLog).order_by(ActivityLog.created_at.desc()).limit(10).all()
+    return [{"id": l.id, "activity_type": l.activity_type, "message": l.message, "created_at": l.created_at.isoformat()} for l in logs]

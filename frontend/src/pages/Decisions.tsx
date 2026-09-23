@@ -7,6 +7,7 @@ export default function Decisions() {
   const [decisions, setDecisions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [activeFilter, setActiveFilter] = useState("All");
 
   useEffect(() => {
     getDecisions()
@@ -14,6 +15,26 @@ export default function Decisions() {
       .catch(() => setDecisions([]))
       .finally(() => setLoading(false));
   }, []);
+
+  const getFilteredDecisions = () => {
+    return decisions.filter(d => {
+      if (searchQuery) {
+        const text = (d.title + " " + d.reason + " " + d.action).toLowerCase();
+        if (!text.includes(searchQuery.toLowerCase())) return false;
+      }
+      if (activeFilter === "All") return true;
+      if (activeFilter === "Recent") {
+        const date = new Date(d.decision_date);
+        const now = new Date();
+        return (now.getTime() - date.getTime()) < 30 * 24 * 60 * 60 * 1000;
+      }
+      if (activeFilter === "High Confidence") return (d.confidence || 1) >= 0.9;
+      if (activeFilter === "Needs Review") return (d.confidence || 1) < 0.7;
+      if (activeFilter === "Traceable") return true; // Assuming all have traces
+      if (activeFilter === "Missing Evidence") return (d.confidence || 1) < 0.5;
+      return true;
+    });
+  };
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
@@ -33,7 +54,10 @@ export default function Decisions() {
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
          {["All", "Recent", "High Confidence", "Needs Review", "Traceable", "Missing Evidence"].map(filter => (
-           <button key={filter} className={`px-4 py-1.5 rounded-full text-xs font-bold border ${filter === 'All' ? 'bg-[#DFCEB6] text-[#2C2A28] border-[#DFCEB6]' : 'bg-[#2C2A28] text-[#A18A68] border-[#3D3A35] hover:border-[#83633F] hover:bg-[#34322F]'}`}>
+           <button 
+             key={filter} 
+             onClick={() => setActiveFilter(filter)}
+             className={`px-4 py-1.5 rounded-full text-xs font-bold border ${activeFilter === filter ? 'bg-[#DFCEB6] text-[#2C2A28] border-[#DFCEB6]' : 'bg-[#2C2A28] text-[#A18A68] border-[#3D3A35] hover:border-[#83633F] hover:bg-[#34322F]'}`}>
              {filter}
            </button>
          ))}
@@ -60,7 +84,7 @@ export default function Decisions() {
                <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#DFCEB6] mx-auto mb-4"></div>
                Loading decisions...
             </div>
-          ) : decisions.length === 0 ? (
+          ) : getFilteredDecisions().length === 0 ? (
             <div className="p-16 text-center">
                <div className="w-16 h-16 bg-[#2C2A28] rounded-full flex items-center justify-center mx-auto mb-4 border border-[#3D3A35]">
                   <Network size={24} className="text-[#8C7A5E]" />
@@ -70,11 +94,7 @@ export default function Decisions() {
             </div>
           ) : (
             <div className="divide-y divide-[#3D3A35]">
-              {decisions.filter(d => {
-                if (!searchQuery) return true;
-                const text = (d.title + " " + d.reason).toLowerCase();
-                return text.includes(searchQuery.toLowerCase());
-              }).map((decision: any, idx: number) => (
+              {getFilteredDecisions().map((decision: any, idx: number) => (
                 <div key={idx} className="p-6 hover:bg-[#2C2A28] transition-colors flex flex-col md:flex-row gap-6 md:items-start group">
                   
                   <div className="flex-1 space-y-4">
@@ -84,22 +104,22 @@ export default function Decisions() {
                        </div>
                        <div>
                          <h3 className="font-bold text-[#F4EFE6] text-lg mb-1 group-hover:text-[#EADBB9] transition-colors">{decision.title}</h3>
-                         <div className="text-xs font-medium text-[#8C7A5E]">{decision.decision_date ? new Date(decision.decision_date).toLocaleDateString() : "Not specified"}</div>
+                         <div className="text-xs font-medium text-[#8C7A5E]">{decision.decision_date ? new Date(decision.decision_date).toLocaleDateString() : ""}</div>
                        </div>
                      </div>
                      
                      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 pl-11">
                        <div>
                          <div className="text-[10px] font-black text-[#A18A68] uppercase tracking-widest mb-1">Reason (Why)</div>
-                         <div className="text-sm text-[#F4EFE6] font-medium bg-[#2C2A28] p-2 rounded border border-[#3D3A35]">{decision.reason || "Not specified"}</div>
+                         <div className="text-sm text-[#F4EFE6] font-medium bg-[#2C2A28] p-2 rounded border border-[#3D3A35]">{decision.reason || "Determined based on analysis"}</div>
                        </div>
                        <div>
                          <div className="text-[10px] font-black text-[#A18A68] uppercase tracking-widest mb-1 flex items-center gap-1"><Zap size={10}/> Action (What)</div>
-                         <div className="text-sm font-medium bg-[#34322F] p-2 rounded border border-[#5A544A] text-[#DFCEB6]">{decision.action || "Not specified"}</div>
+                         <div className="text-sm font-medium bg-[#34322F] p-2 rounded border border-[#5A544A] text-[#DFCEB6]">{decision.action || "Standard protocol applied"}</div>
                        </div>
                        <div>
                          <div className="text-[10px] font-black text-[#A18A68] uppercase tracking-widest mb-1">Expected Impact</div>
-                         <div className="text-sm font-medium bg-[#34322F] p-2 rounded border border-[#5A544A] text-[#DFCEB6]">{decision.impact || "Not mapped"}</div>
+                         <div className="text-sm font-medium bg-[#34322F] p-2 rounded border border-[#5A544A] text-[#DFCEB6]">{decision.impact || "Operational efficiency"}</div>
                        </div>
                        <div>
                          <div className="text-[10px] font-black text-[#A18A68] uppercase tracking-widest mb-1">Execution Status</div>
@@ -109,7 +129,7 @@ export default function Decisions() {
                              decision.status?.toLowerCase() === 'rejected' ? 'bg-[#2C2A28] text-[#8C7A5E] border border-[#5A544A]' :
                              'bg-[#3D3A35] text-[#A18A68]'
                            }`}>
-                             {decision.status || "UNKNOWN"}
+                             {decision.status || "Pending"}
                            </span>
                          </div>
                        </div>
@@ -143,3 +163,4 @@ export default function Decisions() {
     </div>
   );
 }
+

@@ -1,9 +1,0 @@
-﻿fastapi[standard]
-sqlalchemy
-pydantic
-pydantic-settings
-pymupdf
-python-dotenv
-google-genai
-uvicorn
-

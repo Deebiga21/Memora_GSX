@@ -3,7 +3,7 @@ import json
 from typing import List, Optional
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
-from ..models import Person, Event, Meeting, Decision, Evidence, Prediction, Project
+from ..models import Person, Event, Meeting, Decision, Evidence, Forecast, ForecastEvidence, Project
 from .pdf_service import get_document_chunks
 import google.generativeai as genai
 
@@ -43,7 +43,7 @@ class ExtractedDecision(BaseModel):
     status: Optional[str] = Field(description="active, implemented, revised, rejected, unknown", default="active")
     evidence: Optional[AIEvidence] = None
 
-class ExtractedPrediction(BaseModel):
+class ExtractedForecast(BaseModel):
     type: str = Field(description="UPCOMING_DEADLINE, PLANNED_MEETING, EXPECTED_ACTION, DEPENDENCY, POTENTIAL_RISK, FOLLOW_UP")
     description: str = Field(description="Description of the predicted or future event/action")
     expected_date: Optional[str] = Field(description="Expected date in YYYY-MM-DD format if known", default=None)
@@ -69,63 +69,17 @@ class AIExtractionResult(BaseModel):
     events: List[ExtractedEvent] = Field(default_factory=list)
     meetings: List[ExtractedMeeting] = Field(default_factory=list)
     decisions: List[ExtractedDecision] = Field(default_factory=list)
-    predictions: List[ExtractedPrediction] = Field(default_factory=list)
+    forecasts: List[ExtractedForecast] = Field(default_factory=list)
     projects: List[ExtractedProject] = Field(default_factory=list)
     relationships: List[AIRelationship] = Field(default_factory=list)
 
 def extract_entities_from_chunk(text: str) -> Optional[AIExtractionResult]:
-    api_key = (os.getenv("GEMINI_API_KEY") or os.getenv("NVIDIA_API_KEY"))
-    if not api_key:
-        print("Warning: Missing API KEY.")
-        return None
-        
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel("gemini-3.6-flash")
-    
-    prompt = f"""
-You are an institutional memory extraction engine.
-Analyze only the supplied institutional document text.
-Extract people, events, meetings, decisions, projects, and future predictions/foresight.
-Do not invent facts.
-Do not infer unsupported information as fact.
-If information is missing, return null or an empty array.
-For every important entity or decision, identify the page number and supporting evidence snippet based on the '--- PAGE X ---' markers in the text.
-A decision should include: title, date, reason, action, impact.
-A project should include: title, status, description, budget, timeline.
-A prediction should identify upcoming deadlines, planned meetings, expected actions, or potential risks EXPLICITLY stated in the text.
-Distinguish explicitly stated facts from inferred relationships.
-Only create a relationship when the document provides sufficient evidence.
-Return valid JSON matching the following schema.
-
-EXPECTED JSON FORMAT:
-{{
-    "people": [{{ "name": "...", "role": "...", "department": "...", "description": "...", "evidence": {{"page_number": 1, "snippet": "...", "confidence": 0.9}} }}],
-    "events": [{{ "title": "...", "date": "...", "type": "...", "description": "...", "evidence": {{"page_number": 1, "snippet": "...", "confidence": 0.9}} }}],
-    "meetings": [{{ "title": "...", "date": "...", "type": "...", "description": "...", "participants": ["..."], "evidence": {{"page_number": 1, "snippet": "...", "confidence": 0.9}} }}],
-    "decisions": [{{ "title": "...", "date": "...", "reason": "...", "action": "...", "impact": "...", "status": "...", "evidence": {{"page_number": 1, "snippet": "...", "confidence": 0.9}} }}],
-    "predictions": [{{ "type": "UPCOMING_DEADLINE", "description": "...", "expected_date": "...", "basis": "...", "evidence": {{"page_number": 1, "snippet": "...", "confidence": 0.9}} }}],
-    "projects": [{{ "title": "...", "status": "...", "description": "...", "budget": "...", "timeline": "...", "evidence": {{"page_number": 1, "snippet": "...", "confidence": 0.9}} }}],
-    "relationships": [{{ "source_entity": "...", "relationship_type": "...", "target_entity": "...", "evidence": {{"page_number": 1, "snippet": "...", "confidence": 0.9}} }}]
-}}
-
-TEXT:
-{text}
-"""
-    
+    from .gemini_service import extract_with_gemini
     try:
-        response = model.generate_content(prompt)
-        content = response.text
-        if content:
-            # Simple cleanup for markdown code blocks if the model outputs them
-            content = content.strip()
-            if content.startswith("```json"):
-                content = content[7:-3]
-            elif content.startswith("```"):
-                content = content[3:-3]
-            return AIExtractionResult.model_validate_json(content)
+        raw_dict = extract_with_gemini(text)
+        return AIExtractionResult(**raw_dict)
     except Exception as e:
-        print(f"Error extracting from chunk: {str(e)}")
-    return None
+        raise Exception(f"Gemini API error: {str(e)}")
 
 def parse_date(date_str: str):
     from datetime import datetime
@@ -139,7 +93,8 @@ def parse_date(date_str: str):
     return None
 
 def get_or_create_person(db: Session, p: ExtractedPerson) -> Person:
-    existing = db.query(Person).filter(Person.name.ilike(f"%{p.name}%")).first()
+    # Try exact case-insensitive match first to avoid merging distinct entities (e.g. "Ram" and "Ramesh Kumar")
+    existing = db.query(Person).filter(Person.name.ilike(p.name)).first()
     if existing:
         if p.role and not existing.role: existing.role = p.role
         if p.department and not existing.department: existing.department = p.department
@@ -151,7 +106,7 @@ def get_or_create_person(db: Session, p: ExtractedPerson) -> Person:
     return new_p
 
 def get_or_create_event(db: Session, e: ExtractedEvent) -> Event:
-    existing = db.query(Event).filter(Event.title.ilike(f"%{e.title}%")).first()
+    existing = db.query(Event).filter(Event.title.ilike(e.title)).first()
     if existing: return existing
     dt = parse_date(e.date)
     new_e = Event(title=e.title, event_date=dt, event_type=e.type, description=e.description)
@@ -161,7 +116,7 @@ def get_or_create_event(db: Session, e: ExtractedEvent) -> Event:
     return new_e
 
 def get_or_create_meeting(db: Session, m: ExtractedMeeting) -> Meeting:
-    existing = db.query(Meeting).filter(Meeting.title.ilike(f"%{m.title}%")).first()
+    existing = db.query(Meeting).filter(Meeting.title.ilike(m.title)).first()
     if existing: return existing
     dt = parse_date(m.date)
     new_m = Meeting(title=m.title, meeting_date=dt, meeting_type=m.type, description=m.description)
@@ -171,7 +126,7 @@ def get_or_create_meeting(db: Session, m: ExtractedMeeting) -> Meeting:
     return new_m
 
 def get_or_create_decision(db: Session, d: ExtractedDecision) -> Decision:
-    existing = db.query(Decision).filter(Decision.title.ilike(f"%{d.title}%")).first()
+    existing = db.query(Decision).filter(Decision.title.ilike(d.title)).first()
     if existing: return existing
     dt = parse_date(d.date)
     new_d = Decision(title=d.title, decision_date=dt, reason=d.reason, action=d.action, impact=d.impact, status=d.status)
@@ -180,18 +135,17 @@ def get_or_create_decision(db: Session, d: ExtractedDecision) -> Decision:
     db.refresh(new_d)
     return new_d
 
-def get_or_create_prediction(db: Session, p: ExtractedPrediction) -> Prediction:
-    existing = db.query(Prediction).filter(Prediction.description.ilike(f"%{p.description}%")).first()
+def get_or_create_forecast(db: Session, f: ExtractedForecast) -> Forecast:
+    existing = db.query(Forecast).filter(Forecast.description.ilike(f.description)).first()
     if existing: return existing
-    dt = parse_date(p.expected_date)
-    new_p = Prediction(prediction_type=p.type, description=p.description, expected_date=dt, basis=p.basis)
-    db.add(new_p)
+    new_f = Forecast(title=f.type, description=f.description, reason=f.basis)
+    db.add(new_f)
     db.commit()
-    db.refresh(new_p)
-    return new_p
+    db.refresh(new_f)
+    return new_f
 
 def get_or_create_project(db: Session, p: ExtractedProject) -> Project:
-    existing = db.query(Project).filter(Project.title.ilike(f"%{p.title}%")).first()
+    existing = db.query(Project).filter(Project.title.ilike(p.title)).first()
     if existing: return existing
     new_p = Project(title=p.title, status=p.status, description=p.description, budget=p.budget, timeline=p.timeline)
     db.add(new_p)
@@ -208,7 +162,7 @@ def run_extraction_pipeline(db: Session, document_id: int):
         "events": 0,
         "meetings": 0,
         "decisions": 0,
-        "predictions": 0,
+        "forecasts": 0,
         "projects": 0,
         "evidence": 0,
         "relationships": 0
@@ -277,11 +231,15 @@ def run_extraction_pipeline(db: Session, document_id: int):
             stats["projects"] += 1
             extracted_data.append(("project", p_obj))
             
-        for pr in getattr(res, 'predictions', []):
-            pred = get_or_create_prediction(db, pr)
-            add_evidence("prediction", pred.id, pr.evidence)
-            stats["predictions"] += 1
-            extracted_data.append(("prediction", pred))
+        for fc in getattr(res, 'forecasts', []):
+            fore = get_or_create_forecast(db, fc)
+            ev_rec = add_evidence("forecast", fore.id, fc.evidence)
+            if ev_rec:
+                fe = ForecastEvidence(forecast_id=fore.id, document_id=document_id, page_number=ev_rec.page_number, evidence_id=ev_rec.id)
+                db.add(fe)
+                db.commit()
+            stats["forecasts"] += 1
+            extracted_data.append(("forecast", fore))
             
         ai_relationships.extend(res.relationships)
             

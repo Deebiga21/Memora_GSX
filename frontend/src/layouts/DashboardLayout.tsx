@@ -23,9 +23,13 @@ export function DashboardLayout() {
     { name: "Ask Memory", path: "/ask" },
   ];
 
+  const location = window.location.pathname;
+
   useEffect(() => {
     getProfile().then(setUserProfile).catch(console.error);
+  }, [location]);
 
+  useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
         setShowSearch(false);

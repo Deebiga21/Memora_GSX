@@ -129,13 +129,61 @@ class RelationshipResponse(RelationshipBase):
     model_config = ConfigDict(from_attributes=True)
 
 class AskRequest(BaseModel):
-    question: str
-    history: Optional[List[dict]] = []
+    message: str
+    conversation_id: Optional[int] = None
 
 class AskResponse(BaseModel):
     answer: str
     confidence: float = 0.0
+    conversation_id: Optional[int] = None
     related_decisions: List[dict] = []
     related_events: List[dict] = []
     related_people: List[dict] = []
     evidence: List[dict] = []
+
+class ActivityLogBase(BaseModel):
+    activity_type: str
+    message: str
+    document_id: Optional[int] = None
+
+class ActivityLogResponse(ActivityLogBase):
+    id: int
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+class ChatMessageBase(BaseModel):
+    session_id: int
+    role: str
+    message: str
+
+class ChatMessageResponse(ChatMessageBase):
+    id: int
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+class ChatSessionResponse(BaseModel):
+    id: int
+    created_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+class ForecastBase(BaseModel):
+    title: str
+    description: str
+    confidence: float = 1.0
+    reason: Optional[str] = None
+
+class ForecastResponse(ForecastBase):
+    id: int
+    created_at: datetime
+    updated_at: datetime
+    model_config = ConfigDict(from_attributes=True)
+
+class ForecastEvidenceBase(BaseModel):
+    forecast_id: int
+    document_id: Optional[int] = None
+    page_number: Optional[int] = None
+    evidence_id: Optional[int] = None
+
+class ForecastEvidenceResponse(ForecastEvidenceBase):
+    id: int
+    model_config = ConfigDict(from_attributes=True)

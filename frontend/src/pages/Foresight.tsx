@@ -1,10 +1,13 @@
-import { Compass, Calendar, AlertTriangle, CheckCircle2, Clock, ChevronRight, Check } from 'lucide-react';
+import { Compass, Calendar, AlertTriangle, Clock, Sparkles } from 'lucide-react';
 import { useState, useEffect } from 'react';
-import { getForesight } from '../services/api';
+import { getForesight, getGlobalForesight } from '../services/api';
 
 export default function Foresight() {
   const [predictions, setPredictions] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [globalForesight, setGlobalForesight] = useState<string | null>(null);
+  const [globalLoading, setGlobalLoading] = useState(false);
 
   useEffect(() => {
     getForesight()
@@ -13,6 +16,18 @@ export default function Foresight() {
       .finally(() => setLoading(false));
   }, []);
 
+  const handleGenerateGlobalForesight = async () => {
+    setGlobalLoading(true);
+    try {
+      const res = await getGlobalForesight();
+      setGlobalForesight(res.prediction);
+    } catch (e) {
+      setGlobalForesight("Failed to generate global foresight.");
+    } finally {
+      setGlobalLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto pb-12">
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 border-b border-[#5A544A] pb-6">
@@ -20,6 +35,44 @@ export default function Foresight() {
           <h1 className="text-3xl font-bold text-[#F4EFE6] mb-1 flex items-center gap-3"><Compass className="text-[#DFCEB6]"/> Foresight & Predictions</h1>
           <p className="text-sm text-[#A18A68] font-medium">AI-inferred future events, deadlines, and risks explicitly stated in your documents.</p>
         </div>
+      </div>
+
+      <div className="bg-[#201D19] border border-[#5A544A] rounded-xl p-6 shadow-sm">
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h2 className="text-xl font-bold text-[#F4EFE6] flex items-center gap-2 mb-2">
+              <Sparkles className="text-[#8C7A5E]" size={20} />
+              Global Strategic Synthesis
+            </h2>
+            <p className="text-sm text-[#A18A68]">
+              "Based on everything that has happened in the institutional records, what could happen next?"
+            </p>
+          </div>
+          {!globalForesight && !globalLoading && (
+            <button 
+              onClick={handleGenerateGlobalForesight}
+              className="bg-[#3D3A35] hover:bg-[#5A544A] text-[#F4EFE6] px-4 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors border border-[#5A544A]"
+            >
+              <Sparkles size={16} />
+              Generate Synthesis
+            </button>
+          )}
+        </div>
+        
+        {globalLoading && (
+          <div className="mt-6 text-center text-[#A18A68] py-8 border-t border-[#3D3A35]">
+            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-[#83633F] mx-auto mb-4"></div>
+            Synthesizing institutional trajectory...
+          </div>
+        )}
+
+        {globalForesight && !globalLoading && (
+          <div className="mt-6 pt-6 border-t border-[#3D3A35]">
+            <div className="bg-[#2C2A28] border border-[#5A544A] rounded-lg p-5 text-sm text-[#F4EFE6] space-y-4 leading-relaxed whitespace-pre-wrap">
+              {globalForesight}
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="bg-[#2C2A28] border border-[#5A544A] rounded-xl shadow-sm overflow-hidden min-h-[400px]">

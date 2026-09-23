@@ -7,3 +7,5 @@ __pycache__/
 dist/
 build/
 memora.db
+backend/uploads/
+backend/test_out.txt

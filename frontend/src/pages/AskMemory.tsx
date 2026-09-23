@@ -1,7 +1,7 @@
 import { Search, BrainCircuit, FileText, Calendar, Users, Network, ArrowRight, ShieldCheck, CornerDownRight, Mic, Volume2, Square } from "lucide-react";
 import { useState, useRef, useEffect } from "react";
 import { askMemory, getDashboardStats } from "../services/api";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 export default function AskMemory() {
   const [query, setQuery] = useState("");
@@ -10,7 +10,10 @@ export default function AskMemory() {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isEmptyDB, setIsEmptyDB] = useState(false);
+  const [conversationId, setConversationId] = useState<number | null>(null);
+  const [expandedEvidence, setExpandedEvidence] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const navigate = useNavigate();
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -74,6 +77,13 @@ export default function AskMemory() {
     if (e) e.preventDefault();
     if (!query.trim()) return;
 
+    const lowerQuery = query.toLowerCase();
+    const isNavCommand = ["go inside", "open extraction", "go to extraction", "process dataset"].some(p => lowerQuery.includes(p));
+    if (isNavCommand && query.split(" ").length < 8) {
+      navigate("/documents");
+      return;
+    }
+
     const userMessage = { role: "user", content: query };
     setMessages(prev => [...prev, userMessage]);
     
@@ -87,9 +97,9 @@ export default function AskMemory() {
     setIsSpeaking(false);
     
     try {
-      // Map messages to history expected by backend
-      const history = messages.map(m => ({ role: m.role, content: m.role === 'user' ? m.content : m.answer }));
-      const res = await askMemory(currentQuery, history);
+      const res = await askMemory(currentQuery, conversationId);
+      if (res.conversation_id) setConversationId(res.conversation_id);
+      
       if (res.answer === "I could not find sufficient evidence in the available institutional records.") {
         setMessages(prev => [...prev, { role: "ai", error: res.answer }]);
         if (shouldSpeakResponse) toggleSpeak(res.answer);
@@ -165,7 +175,7 @@ export default function AskMemory() {
                              </p>
                              
                              {msg.related_decisions?.length > 0 && (
-                               <div className="bg-[#201D19] border border-[#3D3A35] rounded-xl p-4 shadow-inner">
+                               <div className="bg-[#201D19] border border-[#3D3A35] rounded-xl p-4 shadow-inner mt-4">
                                   <div className="text-[9px] font-black text-[#8C7A5E] uppercase tracking-widest mb-2 flex items-center gap-1.5">
                                      <Network size={12}/> Related Decisions
                                   </div>
@@ -178,23 +188,86 @@ export default function AskMemory() {
                                   </div>
                                </div>
                              )}
+
+                             {msg.related_people?.length > 0 && (
+                               <div className="bg-[#201D19] border border-[#3D3A35] rounded-xl p-4 shadow-inner mt-4">
+                                  <div className="text-[9px] font-black text-[#8C7A5E] uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                                     <Users size={12}/> Related People
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    {msg.related_people.map((p: any, i: number) => (
+                                      <span key={i} className="inline-flex items-center px-3 py-1 bg-[#34322F] border border-[#5A544A] rounded-full text-xs font-bold text-[#DFCEB6]">
+                                        {p.name}
+                                      </span>
+                                    ))}
+                                  </div>
+                               </div>
+                             )}
                           </div>
 
                           {msg.evidence?.length > 0 && (
                             <div className="space-y-2 pl-4 border-l-2 border-[#83633F]">
                               <h3 className="text-xs font-bold text-[#A18A68] flex items-center gap-1.5"><FileText size={12} /> Supporting Evidence Sources</h3>
                               <div className="flex gap-2 overflow-x-auto pb-2">
-                                {msg.evidence.map((ev: any, i: number) => (
-                                  <Link to={`/documents/${ev.document_id}`} key={i} className="min-w-[280px] bg-[#2C2A28] border border-[#5A544A] rounded-xl p-4 shadow-md shrink-0 hover:bg-[#3D3A35] transition-colors block">
-                                     <div className="text-[9px] font-black text-[#A18A68] uppercase tracking-widest mb-1.5">
-                                        Source {i + 1} • Page {ev.page}
-                                     </div>
-                                     <div className="text-xs font-bold text-[#F4EFE6] mb-1 truncate">{ev.document}</div>
-                                     <div className="text-[10px] text-[#8C7A5E] italic line-clamp-3 leading-relaxed">
-                                        "{ev.snippet}"
-                                     </div>
-                                  </Link>
-                                ))}
+                                {msg.evidence.map((ev: any, i: number) => {
+                                  const isExpanded = expandedEvidence === `${idx}-${i}`;
+                                  return (
+                                    <div 
+                                      key={i} 
+                                      onClick={() => setExpandedEvidence(isExpanded ? null : `${idx}-${i}`)}
+                                      className="min-w-[280px] max-w-[400px] bg-[#2C2A28] border border-[#5A544A] rounded-xl p-4 shadow-md shrink-0 hover:bg-[#3D3A35] transition-colors block cursor-pointer"
+                                    >
+                                       <div className="text-[9px] font-black text-[#A18A68] uppercase tracking-widest mb-1.5 flex justify-between items-center">
+                                          <span>Source {i + 1} • Page {ev.page || 1}</span>
+                                          <span>{isExpanded ? 'Collapse' : 'Expand'}</span>
+                                       </div>
+                                       <div className="text-xs font-bold text-[#F4EFE6] mb-1 truncate">{ev.document || "Unknown Document"}</div>
+                                       <div className={`text-[10px] text-[#8C7A5E] italic leading-relaxed ${isExpanded ? '' : 'line-clamp-3'}`}>
+                                          "{ev.snippet}"
+                                       </div>
+                                       
+                                       {isExpanded && (
+                                          <div className="mt-3 pt-3 border-t border-[#5A544A] space-y-3">
+                                            <div className="bg-[#201D19] p-3 rounded-lg border border-[#3D3A35]">
+                                              <div className="text-[9px] font-black text-[#8C7A5E] uppercase tracking-widest mb-2">Evidence Metadata</div>
+                                              <div className="grid grid-cols-2 gap-3 text-[10px]">
+                                                <div>
+                                                  <span className="text-[#A18A68] block mb-0.5 font-bold">Source File</span>
+                                                  <span className="text-[#F4EFE6] truncate block">{ev.document || "Unknown"}</span>
+                                                </div>
+                                                <div>
+                                                  <span className="text-[#A18A68] block mb-0.5 font-bold">Location</span>
+                                                  <span className="text-[#F4EFE6]">Page {ev.page || 1}</span>
+                                                </div>
+                                                <div>
+                                                  <span className="text-[#A18A68] block mb-0.5 font-bold">Match Type</span>
+                                                  <span className="text-[#DFCEB6]">Semantic</span>
+                                                </div>
+                                              </div>
+                                            </div>
+                                            
+                                            {ev.document_id ? (
+                                              <Link 
+                                                to={`/documents/${ev.document_id}`} 
+                                                className="w-full py-2 bg-[#3D3A35] hover:bg-[#5A544A] text-[#F4EFE6] rounded-md text-[10px] font-bold transition-colors uppercase tracking-wider flex items-center justify-center gap-1.5"
+                                                onClick={(e) => e.stopPropagation()}
+                                              >
+                                                View Full Document <ArrowRight size={12} />
+                                              </Link>
+                                            ) : (
+                                              <button 
+                                                disabled
+                                                className="w-full py-2 bg-[#201D19] text-[#8C7A5E] border border-[#3D3A35] rounded-md text-[10px] font-bold uppercase tracking-wider flex items-center justify-center gap-1.5 opacity-70 cursor-not-allowed"
+                                                title="Full document not available for mocked or incomplete records"
+                                              >
+                                                Document Not Available
+                                              </button>
+                                            )}
+                                          </div>
+                                       )}
+                                    </div>
+                                  );
+                                })}
                               </div>
                             </div>
                           )}

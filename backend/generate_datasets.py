@@ -94,3 +94,89 @@ def create_security_audit():
 if __name__ == "__main__":
     create_committee_meeting()
     create_security_audit()
+
+def create_cit_meeting():
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", 'B', 16)
+    pdf.cell(200, 10, txt="CIT Meeting Minutes", ln=True, align='C')
+    pdf.set_font("Arial", size=12)
+    pdf.ln(10)
+    
+    pdf.cell(200, 10, txt="Date: September 15, 2026", ln=True)
+    pdf.cell(200, 10, txt="Location: Main Campus - Room 101", ln=True)
+    pdf.cell(200, 10, txt="Participants: Arun, Priya, CIT Committee Members", ln=True)
+    pdf.ln(10)
+    
+    content = (
+        "1. Opening Remarks\n"
+        "The CIT committee discussed the integration of new technologies into the curriculum.\n\n"
+        "2. Infrastructure Update\n"
+        "The team reviewed the current lab equipment and identified areas for upgrade.\n\n"
+        "3. Next Steps\n"
+        "- Finalize the budget for the new hardware by next week.\n"
+        "- Schedule follow-up meetings with vendors."
+    )
+    pdf.multi_cell(0, 10, txt=content)
+    pdf.output("../datasets/cit_meeting_notes.pdf")
+    print("Created cit_meeting_notes.pdf")
+
+def create_deeps_project():
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", 'B', 16)
+    pdf.cell(200, 10, txt="Deeps Project Update", ln=True, align='C')
+    pdf.set_font("Arial", size=12)
+    pdf.ln(10)
+    
+    pdf.cell(200, 10, txt="Date: September 18, 2026", ln=True)
+    pdf.cell(200, 10, txt="Project: Deeps Initiative", ln=True)
+    pdf.cell(200, 10, txt="Lead: Priya", ln=True)
+    pdf.ln(10)
+    
+    content = (
+        "Progress Report\n"
+        "- Phase 1 of the Deeps project has been completed successfully.\n"
+        "- Data collection from the primary sources is ongoing.\n\n"
+        "Blockers\n"
+        "- Minor delays in data validation due to server maintenance.\n\n"
+        "Action Items\n"
+        "- Coordinate with the IT team to resolve server issues.\n"
+        "- Prepare the preliminary data analysis report."
+    )
+    pdf.multi_cell(0, 10, txt=content)
+    pdf.output("../datasets/deeps_project_update.pdf")
+    print("Created deeps_project_update.pdf")
+
+def create_sriram_review():
+    pdf = FPDF()
+    pdf.add_page()
+    pdf.set_font("Arial", 'B', 16)
+    pdf.cell(200, 10, txt="Technical Review with Sriram", ln=True, align='C')
+    pdf.set_font("Arial", size=12)
+    pdf.ln(10)
+    
+    pdf.cell(200, 10, txt="Date: September 20, 2026", ln=True)
+    pdf.cell(200, 10, txt="Reviewer: Sriram", ln=True)
+    pdf.cell(200, 10, txt="Focus Area: Backend Architecture", ln=True)
+    pdf.ln(10)
+    
+    content = (
+        "System Architecture Review\n"
+        "Sriram reviewed the current backend architecture and suggested implementing a microservices approach for better scalability.\n\n"
+        "Security Audit Findings\n"
+        "- Recommended updating the authentication middleware.\n"
+        "- Suggested regular vulnerability scanning for all endpoints.\n\n"
+        "Conclusion\n"
+        "The team will begin drafting a transition plan based on Sriram's recommendations over the next two sprints."
+    )
+    pdf.multi_cell(0, 10, txt=content)
+    pdf.output("../datasets/sriram_technical_review.pdf")
+    print("Created sriram_technical_review.pdf")
+
+if __name__ == "__main__":
+    create_committee_meeting()
+    create_security_audit()
+    create_cit_meeting()
+    create_deeps_project()
+    create_sriram_review()

@@ -1,14 +1,20 @@
 import { useEffect, useState } from "react";
-import { getDashboardStats } from "../services/api";
+import { getDashboardStats, getProfile } from "../services/api";
 import { FileText, Network, Calendar, MoreVertical, ArrowUpRight, Search } from "lucide-react";
+import { Link } from "react-router-dom";
 
 export default function Dashboard() {
   const [data, setData] = useState<any>(null);
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [timeFilter, setTimeFilter] = useState("Month");
 
   useEffect(() => {
-    getDashboardStats()
-      .then(res => setData(res))
+    Promise.all([getDashboardStats(), getProfile()])
+      .then(([statsRes, profileRes]) => {
+        setData(statsRes);
+        setProfile(profileRes);
+      })
       .catch(console.error)
       .finally(() => setLoading(false));
   }, []);
@@ -21,9 +27,9 @@ export default function Dashboard() {
     );
   }
 
-  const counts = data?.counts || { documents: 0, people: 0, events: 0, meetings: 0, decisions: 0 };
+  const counts = data?.counts || { documents: 0, people: 0, events: 0, meetings: 0, decisions: 0, memory_nodes: 0 };
   const recentDecisions = data?.recent_decisions || [];
-  const totalNodes = counts.documents + counts.people + counts.events + counts.meetings + counts.decisions;
+  const totalNodes = counts.memory_nodes || (counts.documents + counts.people + counts.events + counts.meetings + counts.decisions);
 
   if (totalNodes === 0) {
     return (
@@ -42,13 +48,13 @@ export default function Dashboard() {
       {/* HEADER */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-4xl font-normal tracking-wide mb-1" style={{ fontFamily: "Georgia, serif" }}>Welcome back, Deepika</h1>
+          <h1 className="text-4xl font-normal tracking-wide mb-1" style={{ fontFamily: "Georgia, serif" }}>Welcome back, {profile?.name || 'User'}</h1>
           <p className="text-sm text-[#A18A68]">Total memory indexed: {totalNodes} nodes</p>
         </div>
         <div className="flex gap-2 bg-[#34322F] border border-[#5A544A] p-1 rounded-full text-xs font-semibold">
-           <button className="px-4 py-1.5 rounded-full hover:text-white transition-colors">Week</button>
-           <button className="px-4 py-1.5 rounded-full bg-[#DFCEB6] text-[#2C2A28] shadow-sm">Month</button>
-           <button className="px-4 py-1.5 rounded-full hover:text-white transition-colors">Year</button>
+           <button onClick={() => setTimeFilter("Week")} className={`px-4 py-1.5 rounded-full transition-colors ${timeFilter === 'Week' ? 'bg-[#DFCEB6] text-[#2C2A28] shadow-sm' : 'hover:text-white'}`}>Week</button>
+           <button onClick={() => setTimeFilter("Month")} className={`px-4 py-1.5 rounded-full transition-colors ${timeFilter === 'Month' ? 'bg-[#DFCEB6] text-[#2C2A28] shadow-sm' : 'hover:text-white'}`}>Month</button>
+           <button onClick={() => setTimeFilter("Year")} className={`px-4 py-1.5 rounded-full transition-colors ${timeFilter === 'Year' ? 'bg-[#DFCEB6] text-[#2C2A28] shadow-sm' : 'hover:text-white'}`}>Year</button>
         </div>
       </div>
 
@@ -123,24 +129,11 @@ export default function Dashboard() {
               <ArrowUpRight size={16}/>
            </div>
 
-           <div className="flex-1 flex flex-col justify-center">
-             <div className="flex text-[10px] text-[#A18A68] mb-2 pl-6 gap-[18px]">
-               <span>Mon</span><span>Tue</span><span>Wed</span><span>Thu</span><span>Fri</span><span>Sat</span><span>Sun</span>
-             </div>
-             
-             {['1 pm','2 pm','3 pm','4 pm'].map(time => (
-               <div key={time} className="flex items-center gap-2 mb-1.5">
-                 <span className="text-[10px] text-[#A18A68] w-6 text-right">{time}</span>
-                 <div className="flex gap-1.5">
-                   {[1,2,3,4,5,6,7].map(d => (
-                     <div key={d} className={`w-6 h-6 rounded-sm ${Math.random() > 0.5 ? 'bg-[#D4C4A8]' : Math.random() > 0.5 ? 'bg-[#998162]' : 'bg-[#50493E]'}`}></div>
-                   ))}
-                 </div>
+           <div className="flex-1 flex flex-col justify-center items-center h-full">
+               <div className="text-[#8C7A5E] text-sm text-center">
+                  <Calendar size={24} className="mx-auto mb-2 opacity-50" />
+                  <p>Insufficient activity data for visualization.</p>
                </div>
-             ))}
-             <div className="flex items-center justify-end gap-1 mt-3 text-[10px] text-[#A18A68]">
-               Less <div className="w-2 h-2 bg-[#50493E] mx-1"></div><div className="w-2 h-2 bg-[#998162]"></div><div className="w-2 h-2 bg-[#D4C4A8] mr-1"></div> More
-             </div>
            </div>
         </div>
 
@@ -156,17 +149,17 @@ export default function Dashboard() {
            <div className="flex-1 space-y-3 overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-[#C6B395] scrollbar-track-transparent">
               
               {recentDecisions.map((dec: any, i: number) => (
-                <div key={i} className="flex items-center justify-between p-2.5 rounded-xl border border-[#D8C7A3] bg-[#E3D2AD]/50 hover:bg-[#D8C7A3] transition-colors cursor-pointer shadow-sm">
+                <Link to={`/decisions/${dec.id}/trace`} key={i} className="flex items-center justify-between p-2.5 rounded-xl border border-[#D8C7A3] bg-[#E3D2AD]/50 hover:bg-[#D8C7A3] transition-colors cursor-pointer shadow-sm block">
                    <div className="flex items-center gap-3">
                      <Network size={14} className="text-[#8C7A5E]"/>
                      <span className="text-sm font-semibold truncate w-24">{dec.title}</span>
                    </div>
                    <div className="flex items-center gap-3">
                      <span className="px-2 py-0.5 rounded-full bg-[#C6B395] text-[10px] font-bold uppercase tracking-wider text-[#38342B]">Decision</span>
-                     <span className="text-xs font-medium text-[#8C7A5E] w-12 text-right">{dec.date ? new Date(dec.date).getDate() : 'N/A'} {dec.date ? new Date(dec.date).toLocaleString('en-US', { month: 'short' }) : ''}</span>
+                     <span className="text-xs font-medium text-[#8C7A5E] w-12 text-right">{dec.date ? new Date(dec.date).getDate() : ''} {dec.date ? new Date(dec.date).toLocaleString('en-US', { month: 'short' }) : ''}</span>
                      <MoreVertical size={14} className="text-[#8C7A5E]"/>
                    </div>
-                </div>
+                </Link>
               ))}
               {recentDecisions.length === 0 && (
                  <div className="text-sm text-center text-[#8C7A5E] mt-10">No recent memory found.</div>
