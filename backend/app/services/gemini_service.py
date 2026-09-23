@@ -3,14 +3,12 @@ import google.generativeai as genai
 from typing import Dict, Any
 
 def extract_with_gemini(text: str) -> Dict[str, Any]:
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        raise ValueError("GEMINI_API_KEY is not configured.")
-        
-    genai.configure(api_key=api_key)
-    model_name = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
-    model = genai.GenerativeModel(model_name)
+    nvidia_key = os.getenv("NVIDIA_API_KEY")
+    gemini_key = os.getenv("GEMINI_API_KEY")
     
+    if not nvidia_key and not gemini_key:
+        raise ValueError("Neither NVIDIA_API_KEY nor GEMINI_API_KEY is configured.")
+        
     prompt = f"""
 You are an institutional memory extraction engine.
 Analyze only the supplied institutional document text.
@@ -39,8 +37,26 @@ TEXT:
     import time
     for attempt in range(3):
         try:
-            response = model.generate_content(prompt)
-            content = response.text
+            if nvidia_key:
+                from openai import OpenAI
+                client = OpenAI(
+                  base_url = "https://integrate.api.nvidia.com/v1",
+                  api_key = nvidia_key
+                )
+                completion = client.chat.completions.create(
+                  model="meta/llama-3.1-8b-instruct",
+                  messages=[{"role":"user","content":prompt}],
+                  temperature=0.2,
+                  max_tokens=4096,
+                )
+                content = completion.choices[0].message.content
+            else:
+                genai.configure(api_key=gemini_key)
+                model_name = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+                model = genai.GenerativeModel(model_name)
+                response = model.generate_content(prompt)
+                content = response.text
+                
             if content:
                 content = content.strip()
                 if content.startswith("```json"):
