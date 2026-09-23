@@ -37,13 +37,7 @@ TEXT:
     import time
     for attempt in range(3):
         try:
-            if gemini_key:
-                genai.configure(api_key=gemini_key)
-                model_name = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
-                model = genai.GenerativeModel(model_name)
-                response = model.generate_content(prompt)
-                content = response.text
-            elif nvidia_key:
+            if nvidia_key:
                 from openai import OpenAI
                 client = OpenAI(
                   base_url = "https://integrate.api.nvidia.com/v1",
@@ -56,6 +50,12 @@ TEXT:
                   max_tokens=4096,
                 )
                 content = completion.choices[0].message.content
+            elif gemini_key:
+                genai.configure(api_key=gemini_key)
+                model_name = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
+                model = genai.GenerativeModel(model_name)
+                response = model.generate_content(prompt)
+                content = response.text
             else:
                 return heuristic_fallback_extract(text)
                 
