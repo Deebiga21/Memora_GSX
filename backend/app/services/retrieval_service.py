@@ -140,7 +140,7 @@ USER MESSAGE:
               api_key = nvidia_key
             )
             completion = client.chat.completions.create(
-              model="meta/llama-3.1-8b-instruct",
+              model="nvidia/llama-3.1-nemotron-70b-instruct",
               messages=[{"role":"user","content":prompt}],
               temperature=0.2,
               max_tokens=2048,

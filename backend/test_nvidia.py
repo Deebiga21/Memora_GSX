@@ -12,7 +12,7 @@ client = OpenAI(
 
 try:
     completion = client.chat.completions.create(
-      model="meta/llama-3.1-8b-instruct",
+      model="nvidia/llama-3.1-nemotron-70b-instruct",
       messages=[{"role":"user","content":"Hello"}],
       temperature=0.2,
       top_p=0.7,
